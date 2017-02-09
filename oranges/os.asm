@@ -5,9 +5,10 @@
 
 ; 调试状态或者 Boot 状态
 %ifdef _BOOT_DEBUG  
-	org 0100h
-%else
-	org 07c00h ;将程序加载到内存偏移07c00h 位置
+	  org 0100h
+%else 
+	org 07c00h 
+	;将程序加载到内存偏移07c00h 位置
 %endif	
 
 	mov ax,cs
