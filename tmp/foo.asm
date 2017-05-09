@@ -2,7 +2,7 @@
 extern choose 
 
 ;;;;;the data area 
-num1st            dd        3 
+num1st        dd        3 
 num2nd        dd        4 
 
 global        _start 
