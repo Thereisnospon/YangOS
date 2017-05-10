@@ -19,12 +19,21 @@ stacktop equ $
 
 
 smsg:
-		DB "hello world"	
+		DB "str"	
 		db 0
 		smsglen equ $-smsg
 
 
+
+s1:
+	db "ab"
+	db 0
+s2: 
+	db 'abc'
+	db 0	
+
 entry:
+
 
 		; 初始化栈顶
 		mov ax ,stacktop  
@@ -33,9 +42,25 @@ entry:
 		mov bp,ax
 
 
+		mov si ,sp 
+		mov word [si],1
+		call absNum
 
-
+		
+		mov si ,sp 
+		mov word [si],ax 
 		call showNum
+
+
+		; mov si ,sp 
+		; mov word [si],s1 
+		; mov word [si+2],s2 
+		; call strcmp
+
+		
+		; mov si,sp 
+		; mov [si],ax 
+		; call showNum
 
 
 		jmp fin
@@ -148,6 +173,19 @@ drawP:
  	leave
  	ret
 
+; 绝对值
+absNum:
+	push bp 
+	mov bp,sp 
+	mov ax,[bp+4]
+	cmp ax,0
+	jns abs_end
+	not ax
+	inc ax
+abs_end:
+	leave
+	ret
+
 
 ;指定页的当前光标显示字符
 ;参数
@@ -190,46 +228,95 @@ drawChar:
 
 
 
+
+
+
+
+; 在当前光标显示数字
+; 参数
+; num  word 数字 : [bp+4]
 showNum:
 	push bp 
-	mov bp,sp
-	sub sp,8
-	mov di ,sp 
-	mov ax,30	; 被除数
-	cmp ax,0	; 判断被除数
-	je  show_num_0_ ; 如果被除数为0，直接输出0
-	mov bx ,10
+	mov  bp,sp
+	push si 
+	push bx
+	push di 
+	xor si ,si  
+	mov  di ,sp 
+	mov  ax,[bp+4]	; 被除数
+	mov bx,ax
+	shl bx ,1
+	jnc	strnum_go ; 如果是负数
+	mov si ,1
+	not ax
+	inc ax  
+	strnum_go:
+	cmp  ax,0	; 判断被除数
+	je   show_num_0_ ; 如果被除数为0，直接输出0
+	mov  bx ,10
 	show_num_loop:
 		xor dx ,dx ; 将高位置为 0
 		div bx 	   ; dx:ax / bx 结果  dx 为余数，ax 为商
 		mov cx,ax  ; 商保存在 cx
-		or  dx,cx   ; 如果 除数与被除数都为 0 直接跳转到 结束
+		or  cx,dx   ; 如果 除数与被除数都为 0 直接跳转到 结束
 		jz show_num_print
+		add dx,'0'
 		push dx	   ; 保存余数
 		jmp show_num_loop
 	show_num_0_:
-			push  0		
+			push  '0'	
 	show_num_print:
 		mov cx ,di 
+		test si ,si 
+		jz sho_num_print_loop
+		push '-'
 		sho_num_print_loop: 
 			pop dx 
 			mov si,sp
-			add dl ,'0'
-			mov ah ,0x0e
-			mov al ,dl 
-			mov bh ,0
-			mov bl ,0
+			mov ah ,0x0e ;功能号 显示字符 
+			mov al ,dl 	 ; 字符
+			mov bh ,0	; 页号
+			mov bl ,0	; 前景色
 			int 10h
-	
 			cmp sp,cx
 			jne sho_num_print_loop
+		pop di 
+		pop bx 	
+		pop si 
 		leave
 		ret
 
 
 
+; 字符串比较
+strcmp:
+	push bp 
+	mov bp,sp 
+	push si 
+	push di 
+	mov si ,[bp+4]
+	mov di ,[bp+6]
+	strcmp_loop:
+		xor ax,ax
+		xor cx,cx 
+		mov  al,[si]
+		mov  cl,[di]
+		sub ax,cx
+		jnz strcmp_end
+		add si, 1
+		add di ,1 
+		jmp strcmp_loop
+	strcmp_end:	
+		pop di 
+		pop si 
+		leave
+		ret
 
-
+; 返回字符串长度
+; 参数
+; str  word 字符串地址 :  [bp+4]
+; 返回值
+; ax=字符串长度
 strlen:
 	push bp
 	mov bp, sp 
