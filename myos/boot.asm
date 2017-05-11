@@ -80,7 +80,7 @@ LABEL_GO_ON:
 	inc	di
 	jmp	LABEL_CMP_FILENAME	;	继续循环
 
-LABEL_DIFFERENT:
+LABEL_DIFFERENT:						; 0xe0 = 1110 0000 与它做与运算。 必然是 32 的整数倍
 	and	di, 0FFE0h						; else ┓	di &= E0 为了让它指向本条目开头
 	add	di, 20h							;     ┃
 	mov	si, LoaderFileName					;     ┣ di += 20h  下一个目录条目
@@ -102,8 +102,8 @@ LABEL_NO_LOADERBIN:
 
 LABEL_FILENAME_FOUND:			; 找到 LOADER.BIN 后便来到这里继续
 	mov	ax, RootDirSectors
-	and	di, 0FFE0h		; di -> 当前条目的开始
-	add	di, 01Ah		; di -> 首 Sector
+	and	di, 0FFE0h		; di -> 当前条目的开始 0xe0 = 1110 0000 做 and 运算后， 必然是 32 的整数倍
+	add	di, 01Ah		; di -> 首 Sector   	0x1a 为 目录项中 ，首簇字段的偏移 
 	mov	cx, word [es:di]
 	push	cx			; 保存此 Sector 在 FAT 中的序号
 	add	cx, ax
@@ -126,8 +126,8 @@ LABEL_GOON_LOADING_FILE:
 	mov	cl, 1
 	call	ReadSector
 	pop	ax			; 取出此 Sector 在 FAT 中的序号
-	call	GetFATEntry
-	cmp	ax, 0FFFh
+	call	GetFATEntry ; 在 ax 返回下一个序号
+	cmp	ax, 0FFFh   ; 是否是最后一个 
 	jz	LABEL_FILE_LOADED
 	push	ax			; 保存 Sector 在 FAT 中的序号
 	mov	dx, RootDirSectors
