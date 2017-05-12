@@ -15,6 +15,7 @@ loader.bin :loader.asm boot.inc
 	 $(NASM) loader.asm -o loader.bin
 
 os.img:boot.bin loader.bin 
+	touch os.img 
 	rm os.img 
 	$(BXIMAGE) -hd -mode='flat' -size=$(SIZE) -q  os.img 
 	dd if=boot.bin of=os.img bs=512 count=1 conv=notrunc 
