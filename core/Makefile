@@ -1,4 +1,4 @@
-TOOLPATH=../../tools/
+TOOLPATH=../tools/
 IMG=$(TOOLPATH)fat12/img 
 MAKE=make 
 COPY=cp 
