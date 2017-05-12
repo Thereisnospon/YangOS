@@ -1,6 +1,11 @@
 LOADER_START_SECTOR equ 0x2
 LOADER_BASE_ADDR equ 0x900
 
+KERNEL_BIN_BASE_ADDR equ 0x70000
+KERNEL_IMAGE_BASE_ADDR equ 0x1500
+KERNEL_START_SECTOR equ 0x9 
+
+PAGE_DIR_TABLE_POS equ 0x100000
 
 
 ; gdt 高 32 位																					     gdt 低 32 位
@@ -42,3 +47,27 @@ RPL2  equ   10b
 RPL3  equ   11b
 TI_GDT	 equ   000b
 TI_LDT	 equ   100b
+
+
+; PDE 页表目录项
+; | 31~12         ：   | 11~9  | 8 | 7   | 6 | 5 | 4   | 3   | 2  | 1  | 0 |
+; | 页表物理页地址 31~12 | AVL   | G | 0   | D | A | PCD | PWT | US | RW | P |
+; PTE 页表项
+; | 31~12         ：   | 11~9  | 8 | 7   | 6 | 5 | 4   | 3   | 2  | 1  | 0 |
+; | 物理页地址 31~12 ：：| AVL   | G | PAT | D | A | PCD | PWT | US | RW | P |
+
+;----------------   页表相关属性    --------------
+PG_P  equ   1b
+PG_RW_R	 equ  00b 
+PG_RW_W	 equ  10b 
+PG_US_S	 equ  000b 
+PG_US_U	 equ  100b 
+
+
+;     前景色       背景色
+; |15|14|13|12|11|10|9|8|7~0   |
+; |K |R | G| B|I |R |G|B| ASCII|
+; k:闪烁 i:亮度
+
+
+

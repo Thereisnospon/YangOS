@@ -186,6 +186,113 @@ p_mode_start:
 	mov gs,ax 
 	mov byte [gs:160], 'p'
 	mov byte [gs:2], 0xa4
+
+	;创建页目录及页表，并初始化页内存位图
+	call setup_page
+
+	; 将描述符表地址及偏移量写入内存 gdt_ptr ，一会用新地址重新加载
+	sgdt [gdt_ptr]
+
+	; 将 gdt 描述符中视频段描述符中的段基址 +0xc0000000
+	mov ebx, [gdt_ptr+2]
+	or dword [ebx+0x18+4],0xc0000000 ;视频段是第3个段描述符,每个描述符是8字节,故0x18。
+					      			 ;段描述符的高4字节的最高位是段基址的31~24位
+					      			 ; 0xc0000000 =3g 
+
+	; 分页前的 视屏段描述符中的 段基址 在 0xb8000 这是一个物理地址
+	; 分页后， 所有的地址是一个线性地址 ，线性地址空间中的 0xb8000 是属于用户空间
+	; 显然不能让用户直接操控显存 。于是 将 段基址 加上一个 0xc0000000  这样的话
+	; 通过选择子 获得到 段基址后，算出地址 （这个地址现在是线性地址，映射到了内核空间)				      			 
+
+
+	; 因为之前的 gdt 的地址是没有分页情况下的 地址。 分页后 让它映射到内核中的高地址 
+	;将gdt的基址加上0xc0000000使其成为内核所在的高地址
+	add dword [gdt_ptr+2],0xc0000000
+
+
+	add esp ,0xc0000000		; 将栈指针同样映射到内核地址
+
+	; 页目录地址赋值给 cr3
+	mov eax,PAGE_DIR_TABLE_POS
+	mov cr3,eax 
+
+	; 打开 cr0 的 pg 位 
+	mov eax, cr0
+    or eax, 0x80000000
+    mov cr0, eax
+
+    ; 开启分页后，用 gdt 的新的地址从新加载
+    lgdt [gdt_ptr]
+    mov byte [gs:200],'v'
+   
+   	mov eax, [esp+2]
+
+    jmp fin 
+
+;------- 创建页目录及页表--------
+setup_page:
+; 先把页目录占用空间逐个清零	
+	mov ecx,4096
+	mov esi,0
+
+
+; PAGE_DIR_TABLE_POS 为 0x100000 = 1mb 
+; 页目录放在物理内存 1mb 处
+
+.clear_page_dir:
+	mov byte [PAGE_DIR_TABLE_POS+esi],0
+	inc esi 
+	loop .clear_page_dir
+
+; 创建页目录项 PDE 
+.create_pde:
+	mov eax, PAGE_DIR_TABLE_POS
+	add eax,0x1000 	 ; 0x1000=4kb 此时 eax 为第一个页表的位置 .  页表放在页目录的后面 ,页目录占据 4kb
+	mov ebx,eax	     ; 为 creat pte 做准备  ebx 为基址	 	
+					 ; 再说下这个 eax  这里指示的是第一个页表的物理地址 应该是 PAGE_DIR_TABLE_POS + eax = 0x100000+0x1000=0x101000 
+					 ; 放在 页目录项的 第 0 项 指定的是物理地址 0~0xfffff 的 1mb 的空间 
+
+	or eax, PG_US_U | PG_RW_W | PG_P 
+	mov [PAGE_DIR_TABLE_POS+0x0],eax 		; 填入第 0 个页目录项
+	mov [PAGE_DIR_TABLE_POS+0xc00],eax		; 填入第 0xc00/4 = 768 项 
+											; 这两项都是指向同一个页表 （该页表物理地址为 0x101000  这个页表将来指向的物理地址范围为 0~0xfffff （1mb 空间。其他 3mb 还没分配 )
+	
+	; 因为加载内核前一直运行的是 Loader 本身在 1mb 内 。因为要保证 之前分段机制中的线性地址和分页后的虚拟地址对应的物理地址一致
+	; 第 0 个页表项代表的页表，表示的空间为 0~0x3fffff 包括了这 1mb 内存。 于是用第 0 项保证 loader 在分页下仍然能运行
+	; 由于操作系统的虚拟地址在 0xc0000000 （3gb) 以上 高10 位 为 0xc00 	
+	; 这里包括了内核的 1mb 物理内存位置 实现了操作系统高 3gb 上的虚拟地址对应到了低端 1mb  									
+
+	sub eax ,0x1000 
+	mov [PAGE_DIR_TABLE_POS+4092],eax 		; 最后一个目录项指向页表自己的地址
+
+; 下面创建页表项 PTE 
+	mov ecx,256		; 1mb 低端内存  / 页大小 4kb = 256
+	mov esi,0 		
+	mov edx,PG_US_U | PG_RW_W | PG_P ; 属性为 7 ,US=1,RW=1,P=1
+
+.create_pte:						; 创建 Page table 
+	mov [ebx+esi*4],edx 			; 此时的 ebx 赋值为 0x101000 也就是第一个页表的物理地址
+	add edx,4096
+	inc esi 
+	loop .create_pte				; 连续物理地址分配 。第一个页表中与低端 1mb 对应。 
+
+; 创建内核以及其它页表的PDE (这样内核的 3g~4g 的 页目录项就做好了)
+	mov eax,PAGE_DIR_TABLE_POS
+	add eax,0x2000					; eax 为 第二个页表的位置
+	or eax, PG_US_U | PG_RW_W | PG_P
+	mov ebx, PAGE_DIR_TABLE_POS		
+	mov ecx,254						; 范围为 769~1022 的所有目录项数量
+	mov esi,769
+
+.create_kernel_pde:
+	mov [ebx+esi*4],eax
+	inc esi 
+	add eax,0x1000 
+	loop .create_kernel_pde
+	ret 			
+
+
+
 fin:
 	hlt
 	jmp fin 	
