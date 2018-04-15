@@ -8,7 +8,12 @@ BOCHS=bochs
 BXIMAGE=bximage
 SIZE=10
 FILE=os.img 
+DOCKER_CLIENT_PATH=$(TOOLPATH)docker-client/
+DOCKER_CLIENT=$(DOCKER_CLIENT_PATH)docker-client.py
+PTYON=$(DOCKER_CLIENT_PATH)venv/bin/python
 
+ggg:
+	$(PTYON) $(DOCKER_CLIENT) --src . --name go
 
 ubuntu:
 	make kerneal.bin 
