@@ -12,16 +12,16 @@ DOCKER_CLIENT_PATH=$(TOOLPATH)docker-client/
 DOCKER_CLIENT=$(DOCKER_CLIENT_PATH)docker-client.py
 PTYON=$(DOCKER_CLIENT_PATH)venv/bin/python
 
-ggg:
-	$(PTYON) $(DOCKER_CLIENT) --src . --name go
+check_docker:
+	$(PTYON) $(DOCKER_CLIENT) --src . --name osgo
 
-ubuntu:
-	make kerneal.bin 
+gk:
+	make check_docker
+	docker exec -it osgo make -f ubuntu-Makefile  go
 
 kerneal.bin: kerneal.c 
 		gcc -c -o kerneal.o kerneal.c
 		ld kerneal.o -Ttext 0xc0001500 -e main -o kerneal.bin
-
 
 loader.bin :loader.asm boot.inc 
 	 $(NASM) loader.asm -o loader.bin
