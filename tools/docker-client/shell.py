@@ -51,19 +51,14 @@ COMMAND_DOCKER_STAT="docker container ls -a --format \"{{.Status}}\" -f \"name=%
 COMMAND_DOCKER_RM=" docker container rm -f %s" %(META_NAME)
 
 
-COMMAND_RUN="""
-docker run -i -t -d \
-  --name wtest \
-  --mount type=bind,source=/Users/yzr/repos/docker/testdir/go,target=/opt/mydir \
-  ubuntu:work-os /bin/bash
-"""
 
-print(os.popen(COMMAND_RUN).read())
+
+
 
 stat = os.popen(COMMAND_DOCKER_STAT).read()
 
 status2(stat)
 
-
+print(stat)
 
 
