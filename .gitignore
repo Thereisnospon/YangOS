@@ -4,6 +4,8 @@
 *.obj
 *.elf
 
+core/test/*.S
+
 # Precompiled Headers
 *.gch
 *.pch
