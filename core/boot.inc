@@ -1,15 +1,21 @@
+
+; loader 在硬盘的起始扇区号
 LOADER_START_SECTOR equ 0x2
 LOADER_BASE_ADDR equ 0x900
+LOADER_CURRENT_SECTOR_SIZE equ 4
 
+; kerneal.bin 加载到内存的 buffer 区域
 KERNEL_BIN_BASE_ADDR equ 0x70000
 KERNEL_IMAGE_BASE_ADDR equ 0x1500
+; kerneal.bin 在硬盘的扇区号
 KERNEL_START_SECTOR equ 0x9 
 
 KERNEL_ENTRY_POINT equ 0xc0001500
 
+; 页目录位置
 PAGE_DIR_TABLE_POS equ 0x100000
 
-
+CONSTANT_MEM_3G equ 0xc0000000
 
 ; gdt 高 32 位																					     gdt 低 32 位
 
@@ -76,3 +82,20 @@ PT_NULL equ 0
 
 
 
+; <--+-------------+-->
+;    |             |
+;    |             |
+;    |             |
+; <------------------->
+;    |             |
+;    |             |
+;    |             |
+; <------------------->
+;    |             |
+;    |             |
+;    |             |
+; <------------------->
+;    |             |
+;    |             |
+;    |             |
+; <--+-------------+-->

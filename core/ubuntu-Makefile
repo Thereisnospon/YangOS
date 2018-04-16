@@ -1,2 +1,8 @@
-go:
-	echo 'x'
+#内核
+kerneal.bin: kerneal.c 
+		gcc -c -o kerneal.o kerneal.c
+		# kerneal 设置起始虚拟地址为 0xc0001500
+		ld kerneal.o -Ttext 0xc0001500 -e main -o kerneal.bin	
+
+go:kerneal.bin
+	echo 'go'
