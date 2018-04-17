@@ -1,8 +1,22 @@
+
+KERNEAL=kerneal/
+LIB=lib/
+KERNEAL_LIB=$(LIB)kerneal/
+PRINT_H=$(KERNEAL_LIB)print.h
+STDINT_H=$(KERNEAL_LIB)stdint.h 
+
+
+$(KERNEAL_LIB)print.o:$(KERNEAL_LIB)print.asm 
+		nasm -f elf -o $(KERNEAL_LIB)print.o $(KERNEAL_LIB)print.asm 
+
+
+$(KERNEAL)main.o:$(PRINT_H) $(STDINT_H) $(KERNEAL)main.c
+	gcc -I $(KERNEAL_LIB) -c -o $(KERNEAL)main.o $(KERNEAL)main.c
+	
 #内核
-kerneal.bin: kerneal.c 
-		gcc -c -o kerneal.o kerneal.c
-		# kerneal 设置起始虚拟地址为 0xc0001500
-		ld kerneal.o -Ttext 0xc0001500 -e main -o kerneal.bin	
+kerneal.bin: $(KERNEAL)main.o $(KERNEAL_LIB)print.o
+	# 链接的时候，调用在前，实现在后 （main.o在 print.o前)
+		ld -Ttext 0xc0001500 -e main -o kerneal.bin $(KERNEAL)main.o $(KERNEAL_LIB)print.o
 
 go:kerneal.bin
 	echo 'go'

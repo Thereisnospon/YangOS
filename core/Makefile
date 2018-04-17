@@ -33,11 +33,12 @@ gk:
 loader.bin :loader.asm boot.inc 
 	 $(NASM) loader.asm -o loader.bin
 
+kerneal.bin:
+	docker exec -it osgo make -f ubuntu-Makefile  go
 # 系统镜像
-os.img:boot.bin loader.bin 
+os.img:boot.bin loader.bin kerneal.bin
 	touch os.img 
 	rm os.img 
-	docker exec -it osgo make -f ubuntu-Makefile  go
 	$(BXIMAGE) -hd -mode='flat' -size=$(SIZE) -q  os.img 
 	# MBR 放在 0 扇区
 	dd if=boot.bin of=os.img bs=512 count=1 conv=notrunc 
@@ -53,6 +54,7 @@ boot.bin:boot.asm boot.inc
 
 #制作系统镜像，并用 bochs 启动
 run:
+	$(DEL) -f kerneal.bin 
 	$(MAKE) os.img 
 	$(BOCHS) -f bochs.conf
 
