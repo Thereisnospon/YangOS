@@ -5,18 +5,23 @@ KERNEAL_LIB=$(LIB)kerneal/
 PRINT_H=$(KERNEAL_LIB)print.h
 STDINT_H=$(KERNEAL_LIB)stdint.h 
 
+OUT_BUILD=build/
+OUT_KERNEAL_BUILD=$(OUT_BUILD)kerneal/
+OUT_KERNEAL_LIB_BUILD=$(OUT_KERNEAL_BUILD)lib/
 
-$(KERNEAL_LIB)print.o:$(KERNEAL_LIB)print.asm 
-		nasm -f elf -o $(KERNEAL_LIB)print.o $(KERNEAL_LIB)print.asm 
+OUT_F_KERNEAL_BIN=$(OUT_KERNEAL_BUILD)kerneal.bin
+OUT_F_PRINT_O=$(OUT_KERNEAL_LIB_BUILD)print.o
+OUT_F_MAIN_O=$(OUT_KERNEAL_BUILD)main.o
 
+$(OUT_F_PRINT_O):$(KERNEAL_LIB)print.asm 
+		nasm -f elf -o $(OUT_F_PRINT_O) $(KERNEAL_LIB)print.asm 
+		
+$(OUT_F_MAIN_O):$(PRINT_H) $(STDINT_H) $(KERNEAL)main.c
+	gcc -I $(KERNEAL_LIB) -c -o $(OUT_F_MAIN_O) $(KERNEAL)main.c
 
-$(KERNEAL)main.o:$(PRINT_H) $(STDINT_H) $(KERNEAL)main.c
-	gcc -I $(KERNEAL_LIB) -c -o $(KERNEAL)main.o $(KERNEAL)main.c
-	
 #内核
-kerneal.bin: $(KERNEAL)main.o $(KERNEAL_LIB)print.o
+$(OUT_F_KERNEAL_BIN): $(OUT_F_MAIN_O) $(OUT_F_PRINT_O)
 	# 链接的时候，调用在前，实现在后 （main.o在 print.o前)
-		ld -Ttext 0xc0001500 -e main -o kerneal.bin $(KERNEAL)main.o $(KERNEAL_LIB)print.o
-
-go:kerneal.bin
+		ld -Ttext 0xc0001500 -e main -o $(OUT_F_KERNEAL_BIN) $(OUT_F_MAIN_O) $(OUT_F_PRINT_O)
+go:$(OUT_F_KERNEAL_BIN)
 	echo 'go'
