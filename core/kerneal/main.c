@@ -26,8 +26,8 @@
 void main(void){
    clean_screen();
     put_str("I am kerneal\n");
-    init_all();
-    asm volatile("sti"); //临时打开中断
+     init_all();
+     asm volatile("sti"); //临时打开中断
     while(1){
         ;
     }

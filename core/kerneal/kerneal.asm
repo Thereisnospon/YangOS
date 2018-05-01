@@ -5,9 +5,9 @@
                         ;为了保持栈中格式统一，手工压入个0
 
 extern put_str ; 声明外部函数
+extern idt_table ; c 中中断处理程序数组
 
 section .data 
-intr_str db "interrupt occur!", 0xa,0
 global intr_entry_table
 
 intr_entry_table:
@@ -16,22 +16,46 @@ intr_entry_table:
 section .text 
 intr%1entry: ;每个中断处理程序唯一标记
     %2              ;压入错误码
-    push intr_str   ;打印字符串
-    call put_str
-    add esp,4       ;清除参数
+
+
+
+    ;保存环境
+    push ds
+    push es 
+    push fs 
+    push gs 
+    pushad ;32 位寄存器。 入栈顺序
+           ; eax ecx edx ebx esp ebp esi edi 
 
     ;如果是从片上进入的中断，除了往从片发送 EOI ，还得往 主片发送 EOI
     mov al,0x20     ;中断结束命令 EOI
     out 0xa0,al     ;向从片发送
     out 0x20,al     ;向主片发送
 
-    add esp,4       ;跨过 ERROR_CODE    
-    iret            ; 从中断返回，32 位下等同于 iretd
+    push %1         ;不管 idt_table 目标程序是否需要参数，一律压入中断向量号,为了调试
+  
+    call [idt_table+ %1*4] ; idt_table 中c版本的中断处理函数
+                           ; idt_table 每个元素是 32位地址，4字节。
+    jmp intr_exit
+
 section .data       
     dd intr%1entry  ;存储各个中断处理程序的地址
                     ;形成一个 inter_entry_table 数组
 %endmacro
 ; end macro
+
+section .text 
+global intr_exit
+intr_exit:
+;以下恢复上下文环境
+    add esp,4   ;跳过中断号
+    popad
+    pop gs 
+    pop fs 
+    pop es 
+    pop ds 
+    add esp,4   ;跳过 error code
+    iretd 
 
 
 VECTOR 0x00,ZERO

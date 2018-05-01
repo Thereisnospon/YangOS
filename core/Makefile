@@ -67,7 +67,7 @@ $(OUT_F_OS_IMG):$(OUT_F_BOOT_BIN) $(OUT_F_LOADER_BIN)
 #mbr
 $(OUT_F_BOOT_BIN):boot.asm boot.inc
 	$(NASM) boot.asm -o $(OUT_F_BOOT_BIN) 
-	
+
 #制作系统镜像，并用 bochs 启动
 run:
 	$(DEL) -f $(OUT_BUILD)*.img 
@@ -81,7 +81,7 @@ clean:
 	$(DEL) -rf $(OUT_BUILD)*.o
 	$(DEL) -rf $(OUT_KERNEAL_BUILD)*.o
 	$(DEL) -rf $(OUT_KERNEAL_LIB_BUILD)*.o
-
+	$(DEL) -rf $(OUT_KERNEAL_BUILD)*.bin 
 
 
 
