@@ -22,6 +22,9 @@ OUT_KERNEAL_LIB_BUILD=$(OUT_KERNEAL_BUILD)lib/
 
 OUT_F_LOADER_BIN=$(OUT_BUILD)loader.bin
 OUT_F_KERNEAL_BIN=$(OUT_KERNEAL_BUILD)kerneal.bin
+
+
+
 OUT_F_OS_IMG=$(OUT_BUILD)os.img
 OUT_F_BOOT_BIN=$(OUT_BUILD)boot.bin
 
@@ -42,11 +45,16 @@ gk:
 $(OUT_F_LOADER_BIN) :loader.asm boot.inc 
 	 $(NASM) loader.asm -o $(OUT_F_LOADER_BIN)
 
-$(OUT_F_KERNEAL_BIN):
+$(OUT_F_KERNEAL_BIN):$(KERNEAL)*.c $(KERNEAL)*.h $(KERNEAL_LIB)*.c $(KERNEAL_LIB)*.h
+	echo "gogo"
 	docker exec -it osgo make -f ubuntu-Makefile  go
 # 系统镜像
-$(OUT_F_OS_IMG):$(OUT_F_BOOT_BIN) $(OUT_F_LOADER_BIN) $(OUT_F_KERNEAL_BIN)
+$(OUT_F_OS_IMG):$(OUT_F_BOOT_BIN) $(OUT_F_LOADER_BIN)
 	rm -f $(OUT_F_OS_IMG)
+
+	#强制
+	docker exec -it osgo make -f ubuntu-Makefile  go
+
 	$(BXIMAGE) -hd -mode='flat' -size=$(SIZE) -q  $(OUT_F_OS_IMG) 
 	# MBR 放在 0 扇区
 	dd if=$(OUT_F_BOOT_BIN) of=$(OUT_F_OS_IMG) bs=512 count=1 conv=notrunc 
@@ -59,15 +67,21 @@ $(OUT_F_OS_IMG):$(OUT_F_BOOT_BIN) $(OUT_F_LOADER_BIN) $(OUT_F_KERNEAL_BIN)
 #mbr
 $(OUT_F_BOOT_BIN):boot.asm boot.inc
 	$(NASM) boot.asm -o $(OUT_F_BOOT_BIN) 
-
+	
 #制作系统镜像，并用 bochs 启动
 run:
-	$(DEL) -f $(OUT_F_KERNEAL_BIN)
+	$(DEL) -f $(OUT_BUILD)*.img 
+	$(DEL) -f $(OUT_BUILD)*.bin 
 	$(MAKE) $(OUT_F_OS_IMG) 
 	$(BOCHS) -f bochs.conf
 
 clean:
-	-$(DEL) *.bin 
-	-$(DEL) *.img 
-	-$(DEL) *.o
+	$(DEL) -rf $(OUT_BUILD)*.img 
+	$(DEL) -rf $(OUT_BUILD)*.bin 
+	$(DEL) -rf $(OUT_BUILD)*.o
+	$(DEL) -rf $(OUT_KERNEAL_BUILD)*.o
+	$(DEL) -rf $(OUT_KERNEAL_LIB_BUILD)*.o
+
+
+
 
