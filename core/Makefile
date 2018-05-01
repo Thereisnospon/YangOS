@@ -63,7 +63,7 @@ $(OUT_F_OS_IMG):$(OUT_F_BOOT_BIN) $(OUT_F_LOADER_BIN)
 	# loader 放在 第 2 扇区 开始。
 	dd if=$(OUT_F_LOADER_BIN) of=$(OUT_F_OS_IMG) bs=512 count=4 seek=2 conv=notrunc
 	# kerneal 程序放在第 9 扇区。（绕开0~8扇区)
-	dd if=$(OUT_F_KERNEAL_BIN) of=$(OUT_F_OS_IMG) bs=512 count=200 seek=9 conv=notrunc
+	dd if=build/kerneal.bin  of=$(OUT_F_OS_IMG) bs=512 count=200 seek=9 conv=notrunc
 #mbr
 $(OUT_F_BOOT_BIN):boot.asm boot.inc
 	$(NASM) boot.asm -o $(OUT_F_BOOT_BIN) 

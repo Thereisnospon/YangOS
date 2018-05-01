@@ -1,5 +1,6 @@
 #include "print.h"
 #include "init.h"
+#include "debug.h"
 // void test(){
 //     put_int(0x00a);
 //     put_char('\n');
@@ -27,7 +28,8 @@ void main(void){
    clean_screen();
     put_str("I am kerneal\n");
      init_all();
-     asm volatile("sti"); //临时打开中断
+    ASSERT(1==2);
+     //asm volatile("sti"); //临时打开中断
     while(1){
         ;
     }
