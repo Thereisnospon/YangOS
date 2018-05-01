@@ -1,6 +1,7 @@
 KERNEAL=kerneal/
 LIB=lib/
 KERNEAL_LIB=$(LIB)kerneal/
+DEVICE=device/
 
 PRINT_H=$(KERNEAL_LIB)print.h
 STDINT_H=$(LIB)stdint.h 
@@ -8,6 +9,13 @@ INIT_H=$(KERNEAL)init.h
 INTERRUPT_H=$(KERNEAL)interrupt.h 
 GLOBAL_H=$(KERNEAL)global.h
 IN_LIB_IO_H=$(KERNEAL_LIB)io.h 
+TIMER_H=$(DEVICE)timer.h 
+
+IN_TIMER_C=$(DEVICE)timer.c 
+
+OUT_DEVICE_DIR=$(OUT_BUILD)device/
+
+
 
 IN_INTERRUPT_C=$(KERNEAL)interrupt.c 
 IN_INIT_C=$(KERNEAL)init.c 
@@ -24,6 +32,12 @@ OUT_F_MAIN_O=$(OUT_KERNEAL_BUILD)main.o
 OUT_F_KERNEAL_O=$(OUT_KERNEAL_BUILD)kerneal.o 
 OUT_F_INTERRUPT_O=$(OUT_KERNEAL_BUILD)interrupt.o 
 OUT_F_INIT_O=$(OUT_KERNEAL_BUILD)init.o 
+
+OUT_F_TIMER_O=$(OUT_DEVICE_DIR)timer.o 
+
+$(OUT_F_TIMER_O): $(TIMER_H) $(IN_TIMER_C)
+	gcc -I $(KERNEAL_LIB) -I $(KERNEAL) -I $(LIB) -c -fno-builtin  -fno-stack-protector \
+		-o $(OUT_F_TIMER_O) $(IN_TIMER_C)
 
 $(OUT_F_KERNEAL_O): $(IN_KERNEAL_ASM)
 	nasm -f elf -o $(OUT_F_KERNEAL_O) $(IN_KERNEAL_ASM)
@@ -44,10 +58,10 @@ $(OUT_F_INTERRUPT_O):$(INTERRUPT_H) $(STDINT_H) $(GLOBAL_H) $(IN_LIB_IO_H) $(PRI
 		-o $(OUT_F_INTERRUPT_O) $(IN_INTERRUPT_C)
 
 #内核
-$(OUT_F_KERNEAL_BIN): $(OUT_F_MAIN_O) $(OUT_F_PRINT_O) $(OUT_F_INTERRUPT_O) $(OUT_F_INIT_O) $(OUT_F_KERNEAL_O)
+$(OUT_F_KERNEAL_BIN): $(OUT_F_MAIN_O) $(OUT_F_PRINT_O) $(OUT_F_INTERRUPT_O) $(OUT_F_INIT_O) $(OUT_F_KERNEAL_O) $(OUT_F_TIMER_O)
 	# 链接的时候，调用在前，实现在后 （main.o在 print.o前)
 		ld -Ttext 0xc0001500  -e main -o $(OUT_F_KERNEAL_BIN) \
-			$(OUT_F_MAIN_O) $(OUT_F_INIT_O) $(OUT_F_INTERRUPT_O) $(OUT_F_PRINT_O) $(OUT_F_KERNEAL_O) 
+			$(OUT_F_MAIN_O) $(OUT_F_INIT_O) $(OUT_F_INTERRUPT_O) $(OUT_F_PRINT_O) $(OUT_F_KERNEAL_O) $(OUT_F_TIMER_O)
 						
 go:$(OUT_F_KERNEAL_BIN)
 	echo 'go'
