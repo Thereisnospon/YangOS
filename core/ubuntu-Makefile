@@ -5,15 +5,23 @@ GCC=gcc
 LD=ld 
 INC_LIB= -I lib/ -I lib/kerneal -I lib/user -I kerneal/ -I device/
 ASFLAGS=-f elf 
+#-Wstrict-prototypes 函数声明必须要有参数类型
+#-fno-builtin 不要用内建函数
+#-Wmissing-prototypes 函数必须要有声明
 CFLAGS=-Wall $(INC_LIB) -c -fno-builtin -W -Wstrict-prototypes \
 	   -Wmissing-prototypes -fno-stack-protector
 LDFLAGS=-Ttext $(ENTRY_POINT) -e main -Map $(BUILD_DIR)/kerneal.map 
 
 OBJS=$(BUILD_DIR)/main.o $(BUILD_DIR)/init.o $(BUILD_DIR)/interrupt.o \
 		$(BUILD_DIR)/timer.o $(BUILD_DIR)/kerneal.o $(BUILD_DIR)/print.o \
-		$(BUILD_DIR)/debug.o 
+		$(BUILD_DIR)/debug.o \
+		$(BUILD_DIR)/string.o
 
 #c 代码编译
+
+$(BUILD_DIR)/string.o: lib/string.c lib/string.h lib/stdint.h kerneal/global.h \
+	lib/stdint.h kerneal/debug.h
+	$(CC) $(CFLAGS) $< -o $@
 
 $(BUILD_DIR)/main.o :kerneal/main.c lib/kerneal/print.h \
 	lib/stdint.h kerneal/init.h 

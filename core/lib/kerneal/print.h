@@ -5,5 +5,5 @@ void put_char(uint8_t char_ascii);
 void set_cursor(uint8_t pos);
 void clean_screen(void);
 void put_str(char *message);
-void put_int(uin32_t num);
+void put_int(uint32_t num);
 #endif

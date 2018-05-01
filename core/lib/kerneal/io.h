@@ -19,7 +19,7 @@ static inline void outb(uint16_t port,uint8_t data){
     asm volatile ("outb %b0,%w1" : : "a"(data),"Nd"(port));
 }
 //将 addr 处起始的 word_cnt 个字节写入端口 port
-static inline void outsw(uint16_t port,const void * addr,uin32_t word_cnt){
+static inline void outsw(uint16_t port,const void * addr,uint32_t word_cnt){
 /*
     + 表示限制为 既做输入又做输出
     outsw 把 ds:esi 处的 16 位 内容写入 port 端口 
@@ -34,7 +34,7 @@ static inline uint8_t inb(uint16_t port){
     return data;
 }
 //将从端口 port读入的 word_cnt 个字节写入 addr
-static inline void insw(uint16_t port,void *addr,uin32_t word_cnt){
+static inline void insw(uint16_t port,void *addr,uint32_t word_cnt){
     /*
         insw 是将从端口 port 读入的 16 位内容写入 es:edi 指向的内存
         cld; 清空方向位

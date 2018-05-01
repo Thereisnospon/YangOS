@@ -311,11 +311,11 @@ static void pic_init(void)
 //function 为在 intr_entry_table 中定义的 中断处理程序的地址
 static void make_idt_desc(struct gate_desc *p_gdesc, uint8_t attr, intr_handler function)
 {
-    p_gdesc->func_offset_low_word = (uin32_t)function & 0x0000FFFF;
+    p_gdesc->func_offset_low_word = (uint32_t)function & 0x0000FFFF;
     p_gdesc->selector = SELECTOR_K_CODE;
     p_gdesc->dcount = 0;
     p_gdesc->attribute = attr;
-    p_gdesc->func_offset_high_word = ((uin32_t)function & 0xFFFF0000) >> 16;
+    p_gdesc->func_offset_high_word = ((uint32_t)function & 0xFFFF0000) >> 16;
 }
 //初始化中断描述符表
 static void idt_desc_init(void)
@@ -353,7 +353,7 @@ void idt_init()
         低 16 位 是 表界限 idt 大小减 1
         先把 idt 地址类型转换为 uint32_t 然后
     */
-    uint64_t idt_operand = ((sizeof(idt) - 1) | ((uint64_t)((uin32_t)idt << 16)));
+    uint64_t idt_operand = ((sizeof(idt) - 1) | ((uint64_t)((uint32_t)idt << 16)));
     asm volatile("lidt %0" ::"m"(idt_operand));
     put_str("idt_init done\n");
 }
@@ -387,7 +387,7 @@ enum intr_status intr_set_status(enum intr_status status){
 }
 //获取中断状态
 enum intr_status intr_get_status(){
-    uin32_t eflags=0;
+    uint32_t eflags=0;
     GET_EFLAGS(eflags);
     return (EFLAGS_IF & eflags) ? INTR_ON : INTR_OFF;
 }
