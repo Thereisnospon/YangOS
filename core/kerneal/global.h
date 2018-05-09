@@ -21,6 +21,9 @@
 #define IDT_DESC_32_TYPE 0xE    //32位的门
 #define IDT_DESC_16_TYPE 0x6    //16位的门，不会用到
 #define NULL ((void *)0)
+#define bool int
+#define true 1
+#define false 0
 
 #define IDT_DESC_ATTR_DPL0 \
     ((IDT_DESC_P << 7)+(IDT_DESC_DPL0<<5)+IDT_DESC_32_TYPE)

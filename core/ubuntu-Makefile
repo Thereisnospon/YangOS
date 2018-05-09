@@ -14,11 +14,17 @@ LDFLAGS=-Ttext $(ENTRY_POINT) -e main -Map $(BUILD_DIR)/kerneal.map
 
 OBJS=$(BUILD_DIR)/main.o $(BUILD_DIR)/init.o $(BUILD_DIR)/interrupt.o \
 		$(BUILD_DIR)/timer.o $(BUILD_DIR)/kerneal.o $(BUILD_DIR)/print.o \
-		$(BUILD_DIR)/debug.o \
+		$(BUILD_DIR)/debug.o $(BUILD_DIR)/bitmap.o \
 		$(BUILD_DIR)/string.o
 
 #c 代码编译
 
+
+$(BUILD_DIR)/bitmap.o: lib/kerneal/bitmap.c lib/kerneal/bitmap.h  lib/kerneal/print.h  \
+			kerneal/interrupt.h kerneal/debug.h lib/string.h \
+			kerneal/global.h lib/stdint.h 
+	$(CC) $(CFLAGS) $< -o $@
+	
 $(BUILD_DIR)/string.o: lib/string.c lib/string.h lib/stdint.h kerneal/global.h \
 	lib/stdint.h kerneal/debug.h
 	$(CC) $(CFLAGS) $< -o $@
