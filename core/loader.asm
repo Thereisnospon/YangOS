@@ -251,7 +251,7 @@ p_mode_start:
 
 enter_kernel:
 	call kernel_init 
-	mov esp ,0xc009f000
+	mov esp ,KERNEL_STACK_START ; 0xc009f000
 	; 低端的 0~1mb 虚拟地址 和 高端的 3g~3g+1mb 都是映射到了物理地址  0~1mb
 	; 这里的 0x1500 与虚拟地址的 0x0xc0001500 是一个意思
 	; 注意:在分页之前 bochs 设置断点的时候，使用的是物理地址。所以在初始化的时候不要用 高位地址0x0xc0001500 设置内核开始的断点。
