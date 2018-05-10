@@ -23,7 +23,7 @@ OBJS=$(BUILD_DIR)/main.o $(BUILD_DIR)/init.o $(BUILD_DIR)/interrupt.o \
 #include "string.h" lib/string.h
 #include "global.h" kerneal/global.h 
 #include "memory.h" kerneal/memory.h 
-
+#include "debug.h" kerneal/debug.h
 #include "list.h" lib/kerneal/list.h
 #include "interrupt.h" kerneal/interrupt.h
 
@@ -34,7 +34,7 @@ $(BUILD_DIR)/list.o: lib/kerneal/list.c lib/kerneal/list.h kerneal/interrupt.h l
 	$(CC) $(CFLAGS) $< -o $@
 
 $(BUILD_DIR)/thread.o: thread/thread.c thread/thread.h\
-	lib/stdint.h lib/string.h kerneal/global.h kerneal/memory.h
+	lib/stdint.h lib/string.h kerneal/global.h kerneal/memory.h lib/kerneal/list.h kerneal/debug.h
 	$(CC) $(CFLAGS) $< -o $@
 
 $(BUILD_DIR)/memory.o : kerneal/memory.c kerneal/memory.h  lib/stdint.h lib/kerneal/print.h

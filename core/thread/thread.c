@@ -3,14 +3,38 @@
 #include "string.h"
 #include "global.h"
 #include "memory.h"
+#include "debug.h"
+#include "list.h"
+
 #define PG_SIZE 4096
 
+struct task_struct *main_thread;     //主线程pcb
+struct list thread_ready_list;       //就绪队列
+struct list thread_all_list;         //所有任务队列
+static struct list_elem *thread_tag; //用于保存队列中的线程节点
+
+extern void switch_to(struct task_struct *cur, struct task_struct *next);
+
+//获取当前线程pcb指针
+struct task_struct *running_thread()
+{
+    uint32_t esp;
+    asm("mov %%esp,%0"
+        : "=g"(esp));
+    /*
+        线程用的 0 级栈都是在自己的 pcb 中 （pcb占据一个自然页)
+        因此 esp 的高 20 位就是当前 pcb 地址
+    */
+    return (struct task_struct *)(esp & 0xfffff000);
+}
 
 /*
 不能通过call调用，详情见下面
 */
 static void kernel_thread(thread_func *function, void *func_arg)
 {
+    //执行function 前要打开中断，避免时钟中断被屏蔽，无法调度其他线程
+    intr_enable();
     function(func_arg);
 }
 
@@ -44,10 +68,22 @@ void init_thread(struct task_struct *pthread, char *name, int prio)
     //pcb清0，一个pcb 一页
     memset(pthread, 0, sizeof(*pthread));
     strcpy(pthread->name, name);
-    pthread->status = TASK_RUNNING;
-    pthread->priority = prio;
+
+    if (pthread == main_thread)
+    {
+        //main 函数也被封装成线程了，并且一直在运行
+        pthread->status = TASK_RUNNING;
+    }
+    else
+    {
+        pthread->status = TASK_READY;
+    }
     //self_kstack 是线程自己在内核态下使用的栈顶地址。 pthread 是pcb最低地址，加上一页大小，是pcb最高地址
     pthread->self_kstack = (uint32_t *)((uint32_t)pthread + PG_SIZE);
+    pthread->priority = prio;
+    pthread->ticks = 0;
+    pthread->elasped_ticks = 0;
+    pthread->pgdir = NULL;
     pthread->stack_magic = 0x19870916; //自定义魔数
 }
 
@@ -63,7 +99,42 @@ struct task_struct *thread_start(char *name, int prio, thread_func function, voi
     init_thread(thread, name, prio);
     thread_create(thread, function, func_arg);
 
-    /*
+    //确保之前不在队列中
+    ASSERT(!elem_find(&thread_ready_list, &thread->general_tag));
+    list_append(&thread_ready_list, &thread->general_tag);
+
+    ASSERT(!elem_find(&thread_all_list, &thread->all_list_tag));
+    list_append(&thread_all_list, &thread->all_list_tag);
+
+    return thread;
+}
+
+//kernel 中的 main 函数完善为主线程
+static void make_main_thread(void)
+{
+    //loader.asm 中进入内核时， mov esp ,0xc009f00 预留了 pcb, 因此其 pcb 为 0xc009e00 (见memory.c)
+    main_thread = running_thread();
+    init_thread(main_thread, "main", 31);
+
+    //main 是当前线程，当前线程不应该在 ready_list 中。
+    ASSERT(!elem_find(&thread_all_list, &main_thread->all_list_tag));
+    list_append(&thread_all_list, &main_thread->all_list_tag);
+}
+
+/*
+ old thread_start
+创建优先级为 prio 的线程，线程名为name，线程所执行的函数是 function(func_arg);
+*/
+/*struct task_struct *thread_start(char *name, int prio, thread_func function, void *func_arg)
+{*/
+
+//pcb都位于内核空间，包括用户进程的pcb页属于内核空间
+/*struct task_struct *thread = get_kernel_pages(1); //thread 指向了pcb最低地址
+
+    init_thread(thread, name, prio);
+    thread_create(thread, function, func_arg);*/
+
+/*
         thread->slef_stack 指向了线程栈最低处
         此时栈中数据为
         thread_stack{                  <-------- esp
@@ -88,12 +159,12 @@ struct task_struct *thread_start(char *name, int prio, thread_func function, voi
             这样，才能定位到 function,func_arg 参数位置
     */
 
-    asm volatile("movl %0, %%esp;\
+/*asm volatile("movl %0, %%esp;\
     pop %%ebp;\
     pop %%ebx;\
     pop %%edi;\
     pop %%esi;\
     ret" ::"g"(thread->self_kstack)
                  : "memory");
-    return thread;
-}
+    return thread;*/
+/*}*/
