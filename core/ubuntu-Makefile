@@ -15,10 +15,20 @@ LDFLAGS=-Ttext $(ENTRY_POINT) -e main -Map $(BUILD_DIR)/kerneal.map
 OBJS=$(BUILD_DIR)/main.o $(BUILD_DIR)/init.o $(BUILD_DIR)/interrupt.o \
 		$(BUILD_DIR)/timer.o $(BUILD_DIR)/kerneal.o $(BUILD_DIR)/print.o \
 		$(BUILD_DIR)/debug.o $(BUILD_DIR)/memory.o  $(BUILD_DIR)/bitmap.o \
-		$(BUILD_DIR)/string.o
+		$(BUILD_DIR)/string.o $(BUILD_DIR)/thread.o
+
+#头文件路径
+#include "thread.h" thread/thread.h
+#include "stdint.h" lib/stdint.h 
+#include "string.h" lib/string.h
+#include "global.h" kerneal/global.h 
+#include "memory.h" kerneal/memory.h 
 
 #c 代码编译
 
+$(BUILD_DIR)/thread.o: thread/thread.c thread/thread.h\
+	lib/stdint.h lib/string.h kerneal/global.h kerneal/memory.h
+	$(CC) $(CFLAGS) $< -o $@
 
 $(BUILD_DIR)/memory.o : kerneal/memory.c kerneal/memory.h  lib/stdint.h lib/kerneal/print.h
 	$(CC) $(CFLAGS) $< -o $@

@@ -9,6 +9,8 @@ void test_string(void);
 void test_assert(void);
 void test_bitmap(void);
 void test_memory(void);
+void k_thread_a(void *);
+
 void main(void)
 {
     clean_screen();
@@ -17,7 +19,9 @@ void main(void)
     //test_string();
     // test_bitmap();
     // test_assert();
-    test_memory();
+    // test_memory();
+    thread_start("k_thread_a,", 31, k_thread_a, "argA");
+
     ASSERT(1 == 2);
     //asm volatile("sti"); //临时打开中断
     while (1)
@@ -26,9 +30,17 @@ void main(void)
     }
 }
 
+void k_thread_a(void *arg)
+{
+    char *para = arg;
+    while (1)
+    {
+        put_str(para);
+    }
+}
 void test_memory(void)
 {
-    void *addr=get_kernel_pages(3);
+    void *addr = get_kernel_pages(3);
     put_str("get_kernel_page start vaddr is 0x");
     put_int((uint32_t)addr);
     put_char('\n');
