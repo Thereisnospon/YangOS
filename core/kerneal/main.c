@@ -3,25 +3,35 @@
 #include "debug.h"
 #include "string.h"
 #include "bitmap.h"
+#include "memory.h"
 
 void test_string(void);
 void test_assert(void);
 void test_bitmap(void);
-
+void test_memory(void);
 void main(void)
 {
     clean_screen();
     put_str("I am kerneal\n");
     init_all();
     //test_string();
-    test_bitmap();
+    // test_bitmap();
     // test_assert();
+    test_memory();
     ASSERT(1 == 2);
     //asm volatile("sti"); //临时打开中断
     while (1)
     {
         ;
     }
+}
+
+void test_memory(void)
+{
+    void *addr=get_kernel_pages(3);
+    put_str("get_kernel_page start vaddr is 0x");
+    put_int((uint32_t)addr);
+    put_char('\n');
 }
 
 void test_string(void)
@@ -54,15 +64,14 @@ void test_bitmap(void)
         bitmap_set(btmp, 0, 1);
         bitmap_set(btmp, 1, 1);
         bitmap_set(btmp, 2, 1);
-        bitmap_set(btmp, 15*8, 1);
-        bitmap_set(btmp, 31*8, 1);
+        bitmap_set(btmp, 15 * 8, 1);
+        bitmap_set(btmp, 31 * 8, 1);
     }
     _test_print_bitmap(btmp, 32);
-    int s1 = bitmap_scan(btmp,30);
-    int s2 = bitmap_scan(btmp,32*8);
+    int s1 = bitmap_scan(btmp, 30);
+    int s2 = bitmap_scan(btmp, 32 * 8);
     put_str("30 free: 0x");
     put_int(s1);
     put_str("\n256 free: 0x");
     put_int(s2);
 }
-

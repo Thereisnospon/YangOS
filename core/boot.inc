@@ -67,6 +67,22 @@ TI_LDT	 equ   100b
 ; | 31~12         ：   | 11~9  | 8 | 7   | 6 | 5 | 4   | 3   | 2  | 1  | 0 |
 ; | 物理页地址 31~12 ：：| AVL   | G | PAT | D | A | PCD | PWT | US | RW | P |
 
+;  -P (Present) 存在位 1 表示在物理内存中，0不在
+;  -RW (Read/Write) 读写位 1 可读可写 0 可读不可写
+;  -US (User/Supervisor) 普通用户/超级用户位 1 为 User 级别 任意特权级(0,1,2,3)可访问
+;     0 为 Supervisor 级别，特权级3不可访问，(0,1,2 可以)
+; -PWT (Page-Level Write-Throught) 页级通写位 1 表示用通写方式，不仅是普通内存，还是高速缓存
+; -PCD (Page-Level Cache-Disable) 页级高速缓存禁止位，1 启用高速缓存，0 禁用
+; -A (Accesed) 访问位 1 表示cpu访问过
+; -D (Dirty) 脏页位 cpu对一个页执行写操作时，将它置为1，此项只对页表项有效，不会修改页目录项
+; -PAT (Page Attribute Table) 页属性表位，能够在页面一级的粒度上设置内存属性
+; -G (Gloabl) 全局位， 1 为全局页，一直在高速缓存TLB 保存
+; -AVL (Available) 位，表示是否可用，操作系统可以用该位
+
+
+
+
+
 ;----------------   页表相关属性    --------------
 PG_P  equ   1b
 PG_RW_R	 equ  00b 
