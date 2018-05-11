@@ -5,6 +5,7 @@
 #include "memory.h"
 #include "debug.h"
 #include "list.h"
+#include "print.h"
 
 #define PG_SIZE 4096
 
@@ -98,7 +99,6 @@ struct task_struct *thread_start(char *name, int prio, thread_func function, voi
 
     init_thread(thread, name, prio);
     thread_create(thread, function, func_arg);
-
     //确保之前不在队列中
     ASSERT(!elem_find(&thread_ready_list, &thread->general_tag));
     list_append(&thread_ready_list, &thread->general_tag);

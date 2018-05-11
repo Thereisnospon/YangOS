@@ -11,11 +11,24 @@ void test_bitmap(void);
 void test_memory(void);
 void k_thread_a(void *);
 
+
 void main(void)
 {
     clean_screen();
+    
     put_str("I am kerneal\n");
     init_all();
+
+    // uint32_t eip=0;
+    // asm volatile("mov %%eip,%0":"=g"(eip));
+    // put_str("eip:0x");
+    // put_int(eip);
+
+    // int g=get_eip();
+
+    // put_str("value:0x");
+    // put_int(g);
+
     //test_string();
     // test_bitmap();
     // test_assert();

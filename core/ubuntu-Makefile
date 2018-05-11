@@ -3,7 +3,7 @@ ENTRY_POINT=0xc0001500
 NASM=nasm 
 GCC=gcc 
 LD=ld 
-INC_LIB= -I lib/ -I lib/kerneal -I lib/user -I kerneal/ -I device/
+INC_LIB= -I lib/ -I lib/kerneal -I lib/user -I kerneal/ -I device/ -I thread/
 ASFLAGS=-f elf 
 #-Wstrict-prototypes 函数声明必须要有参数类型
 #-fno-builtin 不要用内建函数
@@ -50,7 +50,7 @@ $(BUILD_DIR)/string.o: lib/string.c lib/string.h lib/stdint.h kerneal/global.h \
 	$(CC) $(CFLAGS) $< -o $@
 
 $(BUILD_DIR)/main.o :kerneal/main.c lib/kerneal/print.h \
-	lib/stdint.h kerneal/init.h 
+	lib/stdint.h kerneal/init.h   kerneal/debug.h
 	$(GCC) $(CFLAGS) $< -o $@
 
 $(BUILD_DIR)/init.o:kerneal/init.c kerneal/init.h lib/kerneal/print.h \
@@ -58,7 +58,7 @@ $(BUILD_DIR)/init.o:kerneal/init.c kerneal/init.h lib/kerneal/print.h \
 	$(GCC) $(CFLAGS) $< -o $@
 
 $(BUILD_DIR)/interrupt.o: kerneal/interrupt.c kerneal/interrupt.h \
-	lib/stdint.h kerneal/global.h lib/kerneal/io.h lib/kerneal/print.h 
+	lib/stdint.h kerneal/global.h lib/kerneal/io.h lib/kerneal/print.h kerneal/debug.h
 	$(GCC) $(CFLAGS) $< -o $@
 
 $(BUILD_DIR)/timer.o : device/timer.c device/timer.h lib/stdint.h \

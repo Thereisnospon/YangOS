@@ -91,3 +91,9 @@ VECTOR 0x1d,ERROR_CODE
 VECTOR 0x1e,ERROR_CODE
 VECTOR 0x1f,ZERO 
 VECTOR 0x20,ZERO
+
+
+global get_eip
+get_eip:
+    mov eax,[esp]
+    ret

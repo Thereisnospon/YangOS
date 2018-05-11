@@ -3,6 +3,7 @@
 #include "global.h"
 #include "io.h"
 #include "print.h"
+#include "debug.h"
 
 #define IDT_DESC_CNT 0x21 //目前支持的中断数
 
@@ -47,16 +48,31 @@ intr_handler idt_table[IDT_DESC_CNT];   //
 extern intr_handler intr_entry_table[IDT_DESC_CNT]; //声明定义在 kerneal.asm 中的中断处理函数入口数组
 
 /*通用的中断处理函数，一般在异常出现时处理*/
-static void general_intr_handler(uint8_t vec_nr){
-    if(vec_nr==0x27 || vec_nr==0x2f){
+static void general_intr_handler(uint8_t vec_nr)
+{
+    if (vec_nr == 0x27 || vec_nr == 0x2f)
+    {
         // IRQ7 和 IRQ15 会产生伪中断 (spurious interrupt) 无需处理
         //0x2f 是从片最后一个引脚，保留项
-        return ;
+        return;
     }
-    
-    put_str("int vector: 0x");
-    put_int(vec_nr);
-    put_char('\n');
+    print_debugln("<interrupt>");
+    print_debug_kv_str("intr_name",intr_name[vec_nr]);
+    print_debug_kv_int("vec_no",vec_nr);
+    if (vec_nr == 14)
+    {
+        int page_fault_addr = 0;
+        //cr2 存放 page_falut 地址
+        asm("movl %%cr2,%0"
+            : "=r"(page_fault_addr));
+        print_debug_kv_int("page_fault_addr",page_fault_addr);
+    }
+    print_debugln("</interrupt>");
+    //能进入中断处理程序，说明已经处在关中断情况下，下面死循环不会被中断
+    while (1)
+    {
+        ;
+    }
 }
 //一般中断处理函数名注册和异常名称注册
 static void exception_init(void){

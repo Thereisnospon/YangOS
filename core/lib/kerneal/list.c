@@ -1,8 +1,11 @@
 #include "list.h"
 #include "interrupt.h"
 #include "stdint.h"
+#include "print.h"
+#include "debug.h"
 
 //初始化双向链表
+//使用前记得初始化 _(:з」∠)_ （不然下面 find 里面会空指针 ）
 void list_init(struct list *list)
 {
     list->head.prev = NULL;
@@ -62,6 +65,7 @@ bool elem_find(struct list *plist, struct list_elem *obj_elem)
         {
             return true;
         }
+        //ASSERT(elem != NULL);
         elem = elem->next;
     }
     return false;
