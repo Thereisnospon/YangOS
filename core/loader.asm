@@ -23,7 +23,15 @@ DATA_STACK_DESC: dd 0x0000FFFF
  				 dd DESC_DATA_HIGH4
 
 
-; 拼装后的 段基址为 0xb8000  ， 
+; 拼装后的 段基址为 0xb8000 。
+; 文本模式，显示适配器的内存的物理地址为 0xb8000~0xbffff .内存地址0xc0000 表示 显示适配器BIOS所在区域。
+; 由于只进行文本模式输出，为了方便，显存段不使用平坦模式，直接设置段基址为0xb8000,
+; 段大小为  (0xbffff-0xb000) 
+; 段粒度为 4k
+; 因此段界限为 limit= (0xbffff-0xb000) / 4k = 0x7
+; 回顾: 保护模式，段选择子放在段寄存器，访问内存时，根据段寄存器中的段选择子，查询到段描述符的位置，
+; 然后从段描述符拿到段基址等信息，通过段基址+段内地址 定位到实际地址。
+; ---------内存段描述符------
 VIDEO_DESC: dd 0x80000007	 ; limit= (0xbffff-0xb000) / 4k = 0x7
 		    dd DESC_VIDEO_HIGH4 
 
@@ -206,6 +214,7 @@ p_mode_start:
 	or dword [ebx+0x18+4],0xc0000000 ;视频段是第3个段描述符,每个描述符是8字节,故0x18。
 					      			 ;段描述符的高4字节的最高位是段基址的31~24位
 					      			 ; 0xc0000000 =3g 
+									 ; 0x18+ 4 = 28 
 
 	; 分页前的 视屏段描述符中的 段基址 在 0xb8000 这是一个物理地址
 	; 分页后， 所有的地址是一个线性地址 ，线性地址空间中的 0xb8000 是属于用户空间
@@ -216,7 +225,6 @@ p_mode_start:
 	; 因为之前的 gdt 的地址是没有分页情况下的 地址。 分页后 让它映射到内核中的高地址 
 	;将gdt的基址加上0xc0000000使其成为内核所在的高地址
 	add dword [gdt_ptr+2],0xc0000000
-
 
 	add esp ,0xc0000000		; 将栈指针同样映射到内核地址
 
@@ -231,6 +239,11 @@ p_mode_start:
 
     ; 开启分页后，用 gdt 的新的地址从
     lgdt [gdt_ptr]
+	; 已经分页和分段，根据 gs 拿到段选择子，查到了 gs 段描述符,查看到段基址为 0xc00b8000
+	; 加上段内偏移 200 . 地址为 0xc00b8200 
+	; 根据分页地址 ( 0xc00b8200 / 4mb= 768 )，查找 第 768 个页表。
+	; 768 号页表和 0 页表 已经映射到了 0~1mb 的物理地址空间
+	; 0xb8200 直接为物理地址 0xb8200
     mov byte [gs:200],'v'
    
     ; 强制刷新流水线
@@ -238,7 +251,10 @@ p_mode_start:
 
 enter_kernel:
 	call kernel_init 
-	mov esp ,0xc009f000
+	mov esp ,KERNEL_STACK_START ; 0xc009f000
+	; 低端的 0~1mb 虚拟地址 和 高端的 3g~3g+1mb 都是映射到了物理地址  0~1mb
+	; 这里的 0x1500 与虚拟地址的 0x0xc0001500 是一个意思
+	; 注意:在分页之前 bochs 设置断点的时候，使用的是物理地址。所以在初始化的时候不要用 高位地址0x0xc0001500 设置内核开始的断点。
 	jmp KERNEL_ENTRY_POINT	;用 地址 0x1500 访问
 
 ;------将 kernel.bin 中的 segment 拷贝到编译的地址	
@@ -259,11 +275,11 @@ kernel_init:
 	je .PTNULL
 
 	; 为函数 mem_cpy 压入参数 ，参数从右往左依次压入，函数原型类似于 memcpy(dst,src,size)
-	push dword [ebx+16]	; program header 中偏移 16 字节的地方是 p_filesz 压入 memcpy 中第三个参数
+	push dword [ebx+16]	; program header 中偏移 16 字节的地方是 p_filesz 压入 memcpy 中第三个参数 size
 	mov eax,[ebx+4]		; 距离程序头偏移量为 4 字节的位置是 p_offset
 	add eax,KERNEL_BIN_BASE_ADDR	;加上 kernel.bin 被加载到的物理地址， eax 为该段的物理地址
-	push eax 			; 压入第 2 个参数 源地址 
-	push dword [ebx+8]	; 压入第一个参数，目的地址，偏移程序头 8 字节的是 v_addr 这就是目的地址 
+	push eax 			; 压入第 2 个参数 源地址  src
+	push dword [ebx+8]	; 压入第一个参数，目的地址，偏移程序头 8 字节的是 v_addr 这就是目的地址 dst
 	call mem_cpy		; 调用 mem_cpy 完成段复制 
 	add esp,12			; 清理栈中压入的三个参数 
 	.PTNULL:
@@ -274,18 +290,35 @@ kernel_init:
 ; 逐字节拷贝 -----------------
 ; mem_cpy(dst,src,size)
 mem_cpy:
-	cld 
-	push ebp 
-	mov ebp,esp 
+	cld   ; 清除标识位，下面的 movsb 时， esi,edi 自动 + b (b即字节即:1)
+	push ebp ;保存栈帧
+	mov ebp,esp ; 栈指针拷贝到栈帧
 	push ecx 		; rep 指令用到了 ecx ,但是 ecx 对于外层循环要用，先备份
 	mov edi,[ebp+8]	;dst 
 	mov esi,[ebp+12];src 
 	mov ecx,[ebp+16];size 
-	rep movsb  		;逐字节拷贝
+	; rep 指令为重复执行后面的指令，并且将 ecx -1, 直到 ecx 为 0
+	rep movsb  		;逐字节拷贝,从 esi 位置的内存，搬运 1 字节 到 edi 位置的内存
 	; 恢复环境
 	pop ecx 
 	pop ebp 
 	ret 
+
+; <--+-------------+-->
+;    |             |
+; <-------------------> P
+;    |   SIZE      |
+; <-------------------> P-4
+;    |   SRC       |
+; <-------------------> P-8
+;    |   DST       |
+; <--+-------------+--> P-12
+;    |   RE        |   			;返回地址
+; <-------------------> P-16 , esp ,ebp
+; [ebp+16] : size
+; [ebp+12] : src
+; [ebp+8]  : dst
+
 
 
 ;------- 创建页目录及页表--------
@@ -350,6 +383,8 @@ setup_page:
 	loop .create_kernel_pde
 	ret 			
 
+; 最终 虚拟地址空间的 0~1mb ，和虚拟地址空间的 3g~3g+1mb 都指向的物理地址 0~1m. （第一个页面目前只分配了256个页表项目,1mb的空间）
+; 目前内核空间为 3g+4mb~4g 的高地址。
 
 
 fin:

@@ -57,10 +57,13 @@ entry:
 		mov byte [gs:0x01],0xa4
 
 
-
+		; loader 在的扇区号
 		mov eax,LOADER_START_SECTOR
+		; 需要将loader 放在内存的起始位置
 		mov bx, LOADER_BASE_ADDR
-		mov cx,4
+		; 当前的 loader 大小，目前占据4个扇区
+		mov cx,LOADER_CURRENT_SECTOR_SIZE
+		;读取loader到内存
 		call rd_disk_m_16
 
 ;ox7c8b

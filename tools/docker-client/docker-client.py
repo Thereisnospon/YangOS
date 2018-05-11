@@ -3,6 +3,8 @@ import docker
 import os
 import sys
 from docker.types import Mount
+
+
 #
 # -a -s  --name  go 这种形式的参数，返回一个 Map
 # {'a': True, 's': True, 'name': 'go'}
@@ -30,6 +32,7 @@ def argMap():
             pass
     return retMap
 
+
 gArgsMap = argMap()
 
 # gArgMountSrcDir = "/Users/yzr/repos/docker/testdir/go"
@@ -41,9 +44,17 @@ DEFATULT_TAR_DIR = "/opt/mydir"
 gArgMountSrcDir = gArgsMap.get("src")
 gArgMountTargetDir = gArgsMap.get("dst")
 gArgContainerName = gArgsMap.get("name")
+gArgWork64 = gArgsMap.get("i64") == True
+
+gWorkImage = "ubuntu:work-os32"
+if (gArgWork64):
+    gWorkImage = "ubuntu:work-os"
+
+test = gArgsMap.get("test")
+
+print(gWorkImage)
 
 
-test=gArgsMap.get("test")
 
 print(gArgMountSrcDir, gArgMountTargetDir, gArgContainerName)
 
@@ -63,7 +74,7 @@ if (gArgMountTargetDir == None):
 if (gArgContainerName == None):
     RuntimeError("container name is None")
 
-if(test==True):
+if (test == True):
     sys.exit(0)
 
 gFormatContainerName = ("/%s" % (gArgContainerName))
@@ -104,7 +115,7 @@ def printContainer(container):
 # 启动一个 container
 def createContainer():
     mMounts = createMount(gArgMountTargetDir, gArgMountSrcDir)
-    container = client.containers.run("ubuntu:work-os",
+    container = client.containers.run(gWorkImage,
                                       "/bin/bash",
                                       name=gArgContainerName,
                                       detach=True,
