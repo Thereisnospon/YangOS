@@ -1,7 +1,8 @@
 #include "timer.h"
 #include "io.h"
 #include "print.h"
-
+#include "thread.h"
+#include "debug.h"
 #define IRQ0_FREQUENCY 100 //100hz
 #define INPUT_FREQUENCY 1193180//计数器频率为 1.19318mhz, 即1秒发生 1193180 次脉冲
 #define COUNTER0_VALUE INPUT_FREQUENCY/IRQ0_FREQUENCY// 1 秒计数器脉冲数/ 100 频数。
@@ -11,6 +12,8 @@
 #define COUNTER_MODE 2  //方式2 比率发生器
 #define READ_WRITE_LATCH 3 //先读写低8位，再读写高8位
 #define PIT_CONTROL_PORT 0x43
+
+uint32_t ticks; //内核自中断以来总共的滴答数
 
 /*----------------------------------------
 |         8253控制字                      |
@@ -81,6 +84,24 @@ static void frequency_set(uint8_t counter_port,\
     outb(counter_port,(uint8_t)counter_value>>8);
 }
 
+static void intr_timer_handler(void)
+{
+    struct task_struct *cur_thread = running_thread();
+    ASSERT(cur_thread->stack_magic == THREAD_MAGIC_NUM);//检查栈是否溢出
+    cur_thread->elasped_ticks++;//记录此线程占用的cpu时间
+    ticks++;//内核第一次中断开始使用的滴答数
+    if (cur_thread->ticks == 0)//时间片用完就开始调度新的进程上cpu
+    {
+        schedule();
+    }
+    else
+    {
+        //时间片-1
+        cur_thread->ticks--;
+    }
+}
+
+
 void timer_init(){
     put_str("timer_init start\n");
     frequency_set(COUNTER0_PORT,\
@@ -89,5 +110,6 @@ void timer_init(){
                   COUNTER_MODE,\
                   COUNTER0_VALUE
                   );
+    register_handler(0x20,intr_timer_handler);
     put_str("timer_init done \n");
 }

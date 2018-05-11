@@ -10,39 +10,35 @@ void test_assert(void);
 void test_bitmap(void);
 void test_memory(void);
 void k_thread_a(void *);
-
+void k_thread_b(void *);
 
 void main(void)
 {
     clean_screen();
-    
+
     put_str("I am kerneal\n");
     init_all();
-
-    // uint32_t eip=0;
-    // asm volatile("mov %%eip,%0":"=g"(eip));
-    // put_str("eip:0x");
-    // put_int(eip);
-
-    // int g=get_eip();
-
-    // put_str("value:0x");
-    // put_int(g);
-
     //test_string();
     // test_bitmap();
     // test_assert();
     // test_memory();
     thread_start("k_thread_a,", 31, k_thread_a, "argA");
-
-    ASSERT(1 == 2);
-    //asm volatile("sti"); //临时打开中断
+    thread_start("k_thread_b", 8, k_thread_b, "argB");
+    intr_enable();
+    //ASSERT(1 == 2);
     while (1)
     {
         ;
     }
 }
-
+void k_thread_b(void *arg)
+{
+    char *para = arg;
+    while (1)
+    {
+        put_str(para);
+    }
+}
 void k_thread_a(void *arg)
 {
     char *para = arg;

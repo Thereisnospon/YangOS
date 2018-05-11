@@ -6,6 +6,7 @@
 #include "debug.h"
 #include "list.h"
 #include "print.h"
+#include "interrupt.h"
 
 #define PG_SIZE 4096
 
@@ -85,7 +86,7 @@ void init_thread(struct task_struct *pthread, char *name, int prio)
     pthread->ticks = 0;
     pthread->elasped_ticks = 0;
     pthread->pgdir = NULL;
-    pthread->stack_magic = 0x19870916; //自定义魔数
+    pthread->stack_magic = THREAD_MAGIC_NUM; //自定义魔数
 }
 
 /*
@@ -119,6 +120,59 @@ static void make_main_thread(void)
     //main 是当前线程，当前线程不应该在 ready_list 中。
     ASSERT(!elem_find(&thread_all_list, &main_thread->all_list_tag));
     list_append(&thread_all_list, &main_thread->all_list_tag);
+}
+
+//实现任务调度
+/*
+    在时钟中断或者其它时候，调用任务调度
+    1. 获取当前运行的线程的 pcb:cur
+    2. 判断条件，切换状态，重置时间片等
+    3. 获取下一个要运行的线程的 pcb:next
+    4. switch_to 当前 pcb 线程 到 next 线程 pcb
+        具体步骤:
+          0. 进入 switch_to 之前在创建线程时，压入的 kernel_thread 或者 运行 switch_to 的返回地址 eip
+          1. 在当前 esp 下 压入 ebp,ebx,edi,esi (ABI 规则)
+          2. 保存当前 esp 到 pcb 的 self_stack 指针
+          3. 从 next 的 pcb 的 selft_stack 指针获取到 之前保存环境的 esp
+          4. 加载esp 后，从当前栈 推出 esi,edi,ebx,ebp
+          5. 此时 栈顶 esp 指向的是 之前压入的返回地址 （首次调用 : kernel_thread, 或者 switch_to 返回地址)
+          6. 通过 ret 的形式，将返回地址加载到 当前 eip 寄存器，然后 cpu 继续从 eip 开始执行
+                a: eip 为 kernel_thread 即首次调度，那么进入 kernel_thread, 调用 function
+                b: eip 为 switch_to 返回地址。 可能是继续执行 schedule 然后继续执行中断处理函数，然后退出中断，然后继续执行该线程
+*/
+void schedule()
+{
+    ASSERT(intr_get_status() == INTR_OFF);
+
+    struct task_struct *cur = running_thread();
+    if (cur->status == TASK_RUNNING) //如果是运行的时间片到了，加入到队尾
+    {
+        ASSERT(!elem_find(&thread_ready_list, &cur->general_tag));
+        list_append(&thread_ready_list, &cur->general_tag);
+        cur->ticks = cur->priority; //重置时间片为 priority
+        cur->status = TASK_READY;   //ready状态
+    }
+    else
+    {
+        //线程需要某时间发生才能继续cpu运行，不需要加入队列，因为当前线程不在就绪队列中
+    }
+
+    ASSERT(!list_empty(&thread_ready_list));
+    thread_tag = NULL; //thread tag 清空
+    thread_tag = list_pop(&thread_ready_list);
+    //拿到 thread_tag 对应的 task_struct 指针
+    struct task_struct *next = elem2entry(struct task_struct, general_tag, thread_tag);
+    next->status = TASK_RUNNING;
+    switch_to(cur, next);
+}
+
+void thread_init()
+{
+    put_str("thread_init_start \n");
+    list_init(&thread_ready_list);
+    list_init(&thread_all_list);
+    make_main_thread();
+    put_str("thread_init_done\n");
 }
 
 /*

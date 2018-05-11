@@ -3,7 +3,19 @@
 
 #include "global.h"
 #include "stdint.h"
+
+/*
+    offset 求出 struct type 类型的 member 成员相对于 结构体内部的偏移
+    因为 &(struct_type_a.member) - &struct_type_a = n (偏移量)
+    如果让 &struct_type_a = 0 ,那么  &(struct_type_a.member) = n 
+    因此.   (&(struct_type*)0)->member = n 
+*/
 #define offset(struct_type, member) (int)(&((struct_type *)0)->member)
+
+/*
+    根据 struct_type 类型的 struct_member_name 成员的 elem_ptr 指针 反推出 它所在的结构体的 地址
+    成员地址-成员在结构体偏移量= 结构体地址
+*/
 #define elem2entry(struct_type, struct_member_name, elem_ptr) \
     (struct_type *)((int)elem_ptr - offset(struct_type, struct_member_name))
 

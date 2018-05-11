@@ -6,6 +6,11 @@
 //自定义通用函数类型
 typedef void thread_func(void *);
 
+#define THREAD_MAGIC_NUM 0x19870916
+
+void schedule();
+struct task_struct *running_thread();
+
 //进程或者线程状态
 enum task_status
 {
@@ -89,3 +94,66 @@ struct task_struct
 };
 
 #endif
+
+/*
+struct task_struct
+{
+    uint32_t *self_kstack; 
+        struct thread_stack
+            {
+                uint32_t ebp;
+                uint32_t ebx;
+                uint32_t edi;
+                uint32_t esi;
+                void (*eip)(thread_func *func, void *func_arg);
+                void(*unused_retaddr);
+                thread_func *function; 
+                void *func_arg;        
+            };
+    enum task_status status;
+    char name[16];
+    uint8_t priority;             
+    uint8_t ticks;                
+    uint32_t elasped_ticks;        
+    struct list_elem general_tag;  
+    struct list_elem all_list_tag; 
+    uint32_t *pgdir;              
+    uint32_t stack_magic;
+    };
+*/
+
+// ;       <-------------------> pcb 顶端
+// ;    ↓←←←←←| self_stack  |
+// ;    ↓   <--+-------------+-->
+// ;    ↓     |             |
+// ;    ↓     |             |
+// ;    ↓     |             |
+// ;    ↓→→→→-+-------------+-->
+// ;          |thread_stack |
+// ;          --           --
+// ;          |    ebp      |
+// ;          --           --
+// ;          |    ebx      |
+// ;          --           --
+// ;          |    edi      |
+// ;          --           --
+// ;          |    esi      |
+// ;          --           --
+// ;          |    eip      |
+// ;          --           --
+// ;          |   unused    |
+// ;          --           --
+// ;          |   function  |
+// ;          --           --
+// ;          |   func_arg  |
+// ;        <--+-------------+-->
+// ;          |             | 初始情况下，此栈在线程自己的内核栈中固定，在 pcb 页顶端，每次进入中断时并不一样
+// ;          | intr_stack  | 如果进入中断不涉及 特权级变换，位置在 esp 之下，否则在 tss 中获取
+// ;          |             |
+// ;       <--+-------------+--> pcb 顶端
+
+// ; <------------------->
+// ;    |             |
+// ;    |             |
+// ;    |             |
+// ; <--+-------------+-->

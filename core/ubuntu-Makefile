@@ -15,7 +15,7 @@ LDFLAGS=-Ttext $(ENTRY_POINT) -e main -Map $(BUILD_DIR)/kerneal.map
 OBJS=$(BUILD_DIR)/main.o $(BUILD_DIR)/init.o $(BUILD_DIR)/interrupt.o \
 		$(BUILD_DIR)/timer.o $(BUILD_DIR)/kerneal.o $(BUILD_DIR)/print.o \
 		$(BUILD_DIR)/debug.o $(BUILD_DIR)/memory.o  $(BUILD_DIR)/bitmap.o \
-		$(BUILD_DIR)/string.o $(BUILD_DIR)/thread.o  $(BUILD_DIR)/list.o
+		$(BUILD_DIR)/string.o $(BUILD_DIR)/thread.o  $(BUILD_DIR)/list.o $(BUILD_DIR)/switch.o
 
 #头文件路径
 #include "thread.h" thread/thread.h
@@ -54,7 +54,7 @@ $(BUILD_DIR)/main.o :kerneal/main.c lib/kerneal/print.h \
 	$(GCC) $(CFLAGS) $< -o $@
 
 $(BUILD_DIR)/init.o:kerneal/init.c kerneal/init.h lib/kerneal/print.h \
-	lib/stdint.h kerneal/interrupt.h device/timer.h 
+	lib/stdint.h kerneal/interrupt.h device/timer.h thread/thread.h
 	$(GCC) $(CFLAGS) $< -o $@
 
 $(BUILD_DIR)/interrupt.o: kerneal/interrupt.c kerneal/interrupt.h \
@@ -76,6 +76,9 @@ $(BUILD_DIR)/kerneal.o : kerneal/kerneal.asm
 	$(NASM) $(ASFLAGS) $< -o $@
 
 $(BUILD_DIR)/print.o : lib/kerneal/print.asm
+	$(NASM) $(ASFLAGS) $< -o $@
+
+$(BUILD_DIR)/switch.o: thread/switch.asm
 	$(NASM) $(ASFLAGS) $< -o $@
 
 #链接

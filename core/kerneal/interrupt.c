@@ -407,3 +407,8 @@ enum intr_status intr_get_status(){
     GET_EFLAGS(eflags);
     return (EFLAGS_IF & eflags) ? INTR_ON : INTR_OFF;
 }
+//安装中断处理程序
+void register_handler(uint8_t vector_no, intr_handler function)
+{
+    idt_table[vector_no] = function;
+}
