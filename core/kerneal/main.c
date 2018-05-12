@@ -5,6 +5,9 @@
 #include "bitmap.h"
 #include "memory.h"
 #include "console.h"
+#include "ioqueue.h"
+#include "keyboard.h"
+#include "interrupt.h"
 
 void test_string(void);
 void test_assert(void);
@@ -23,8 +26,8 @@ void main(void)
     // test_bitmap();
     // test_assert();
     // test_memory();
-    //thread_start("k_thread_a,", 31, k_thread_a, "AB\n");
-    //thread_start("k_thread_b", 8, k_thread_b, "CD\n");
+    thread_start("k_thread_a,", 31, k_thread_a, "A");
+    thread_start("k_thread_b", 8, k_thread_b, "B");
     intr_enable();
     //ASSERT(1 == 2);
     while (1)
@@ -37,7 +40,15 @@ void k_thread_b(void *arg)
     char *para = arg;
     while (1)
     {
-        console_put_str(para);
+      
+        enum intr_status old_status = intr_disable();
+        if (!ioq_empty(&kbd_buf))
+        {
+            console_put_str(arg);
+            char byte = ioq_getchar(&kbd_buf);
+            console_put_char(byte);
+        }
+        intr_set_status(old_status);
     }
 }
 void k_thread_a(void *arg)
@@ -45,7 +56,15 @@ void k_thread_a(void *arg)
     char *para = arg;
     while (1)
     {
-        console_put_str(para);
+        
+        enum intr_status old_status = intr_disable();
+        if (!ioq_empty(&kbd_buf))
+        {
+            console_put_str(arg);
+            char byte = ioq_getchar(&kbd_buf);
+            console_put_char(byte);
+        }
+        intr_set_status(old_status);
     }
 }
 void test_memory(void)

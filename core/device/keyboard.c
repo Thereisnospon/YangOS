@@ -3,6 +3,8 @@
 #include "interrupt.h"
 #include "io.h"
 #include "global.h"
+#include "ioqueue.h"
+
 #define KBD_BUF_PORT 0x60
 
 #define esc '\033'
@@ -35,6 +37,9 @@ static bool shift_status;
 static bool alt_status;
 static bool caps_lock_status;
 static bool ext_scancode;
+
+struct ioqueue kbd_buf;
+
 
 /* 以通码make_code为索引的二维数组 */
 static char keymap[][2] = {
@@ -170,8 +175,11 @@ static void intr_keyboard_handler(void)
 
         /* 只处理ascii码不为0的键 */
         if (cur_char) {
-            put_char(cur_char);
-            return;
+           if(!ioq_full(&kbd_buf)) {
+               put_char(cur_char);
+               ioq_putchar(&kbd_buf,cur_char);
+           }
+           return;
         }
 
         /* 记录本次是否按下了下面几类控制键之一,供下次键入时判断组合键 */
