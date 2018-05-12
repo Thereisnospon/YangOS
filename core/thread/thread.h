@@ -18,7 +18,7 @@ enum task_status
     TASK_READY,
     TASK_BLOCKED,
     TASK_WAITING,
-    TASH_HANGING,
+    TASK_HANGING,
     TASK_DIED
 };
 
