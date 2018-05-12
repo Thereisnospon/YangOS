@@ -3,7 +3,7 @@
 #include "print.h"
 #include "thread.h"
 #include "debug.h"
-#define IRQ0_FREQUENCY 100 //100hz
+#define IRQ0_FREQUENCY   10 //100hz
 #define INPUT_FREQUENCY 1193180//计数器频率为 1.19318mhz, 即1秒发生 1193180 次脉冲
 #define COUNTER0_VALUE INPUT_FREQUENCY/IRQ0_FREQUENCY// 1 秒计数器脉冲数/ 100 频数。
                                                     // 即发生一次时钟中断的 脉冲计数

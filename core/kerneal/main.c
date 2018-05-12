@@ -4,6 +4,7 @@
 #include "string.h"
 #include "bitmap.h"
 #include "memory.h"
+#include "console.h"
 
 void test_string(void);
 void test_assert(void);
@@ -22,29 +23,34 @@ void main(void)
     // test_bitmap();
     // test_assert();
     // test_memory();
-    thread_start("k_thread_a,", 31, k_thread_a, "argA");
-    thread_start("k_thread_b", 8, k_thread_b, "argB");
+    PRINT_EIP;
+    thread_start("k_thread_a,", 31, k_thread_a, "AB\n");
+    PRINT_EIP;
+    thread_start("k_thread_b", 8, k_thread_b, "CD\n");
+    PRINT_EIP;
     intr_enable();
     //ASSERT(1 == 2);
     while (1)
     {
-        ;
+        console_put_str("Main\n");
     }
 }
 void k_thread_b(void *arg)
 {
     char *para = arg;
+    PRINT_EIP;
     while (1)
     {
-        put_str(para);
+        console_put_str(para);
     }
 }
 void k_thread_a(void *arg)
 {
     char *para = arg;
+    PRINT_EIP;
     while (1)
     {
-        put_str(para);
+        console_put_str(para);
     }
 }
 void test_memory(void)
