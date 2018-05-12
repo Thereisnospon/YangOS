@@ -124,6 +124,9 @@ static void make_main_thread(void)
 
 //实现任务调度
 /*
+    时钟中断时: (kernel.asm)
+
+
     在时钟中断或者其它时候，调用任务调度
     1. 获取当前运行的线程的 pcb:cur
     2. 判断条件，切换状态，重置时间片等
@@ -139,6 +142,9 @@ static void make_main_thread(void)
           6. 通过 ret 的形式，将返回地址加载到 当前 eip 寄存器，然后 cpu 继续从 eip 开始执行
                 a: eip 为 kernel_thread 即首次调度，那么进入 kernel_thread, 调用 function
                 b: eip 为 switch_to 返回地址。 可能是继续执行 schedule 然后继续执行中断处理函数，然后退出中断，然后继续执行该线程
+    
+    备注:
+        1. 为啥用ret 调用而不是 call, call 需要 取数据，退栈，再压栈，不如 ret 一次性快
 */
 void schedule()
 {

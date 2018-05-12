@@ -14,6 +14,7 @@ switch_to:
                   ; self_kstack 在 task_struct 偏移为 0
                   ; 所以在 thread 开头处存放 4 字节就可以了
 
+    ; 属于第二部分保护，保护的是线程在内核调度程序的上下文环境，保证switch to 能顺利执行到出口 intr_exit
     ; 以上保存当前线程环境,以下恢复下一个线程环境
 
     mov eax,[esp+24] ;得到栈中参数 next,next=[esp+24]
@@ -26,7 +27,7 @@ switch_to:
     pop esi 
 
     ret
-
+; 进入中断详细看 kerneal.asm 注释
 ; // ;       <------------------->  pcb 低端
 ; // ;    ↓←←←←←| self_stack  | step5: 把 pcb 的 self_stack 指向 当前 esp
 ; // ;    ↓   <--+-------------+-->
@@ -72,7 +73,7 @@ switch_to:
 ; // ;          |             |  线程第一次执行时，eip 指向待调用的函数 kernel_thread   
 ; // ;          |             |     因此，开始调用 function 函数
 ; // ;          |    eip      |  其他时候，eip 指向 switch_to 的返回地址
-; // ;          |             |     继续执行 scudule, 时间中断处理函数，然后退出中断，继续执行切换好的任务
+; // ;          |             |     继续执行 scudule, 时间中断处理函数，然后退出中断( 见 kerneal.asm )继续执行切换好的任务
 ; // ;          |             |
 ; // ;          --           --
 ; // ;          |   unused    |
@@ -111,3 +112,34 @@ switch_to:
 ;     uint32_t *pgdir;              
 ;     uint32_t stack_magic;
 ; };
+
+
+
+
+; // ;          --           --
+; // ;          |    ebp      | 
+; // ;          --           --
+; // ;          |    ebx      |
+; // ;          --           --
+; // ;          |    edi      | 
+; // ;          --           --
+
+    ; %2              ;压入错误码
+
+    ; ;保存环境
+    ; push ds
+    ; push es 
+    ; push fs 
+    ; push gs 
+    ; pushad ;32 位寄存器。 入栈顺序
+    ;        ; eax ecx edx ebx esp ebp esi edi 
+
+    ; ;如果是从片上进入的中断，除了往从片发送 EOI ，还得往 主片发送 EOI
+    ; mov al,0x20     ;中断结束命令 EOI
+    ; out 0xa0,al     ;向从片发送
+    ; out 0x20,al     ;向主片发送
+
+    ; push %1         ;不管 idt_table 目标程序是否需要参数，一律压入中断向量号,为了调试
+  
+    ; call [idt_table+ %1*4] ; idt_table 中c版本的中断处理函数
+    ;                        ; idt_table 每个元素是 32位地址，4字节。
