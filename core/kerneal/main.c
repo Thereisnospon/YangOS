@@ -23,22 +23,18 @@ void main(void)
     // test_bitmap();
     // test_assert();
     // test_memory();
-    PRINT_EIP;
-    thread_start("k_thread_a,", 31, k_thread_a, "AB\n");
-    PRINT_EIP;
-    thread_start("k_thread_b", 8, k_thread_b, "CD\n");
-    PRINT_EIP;
+    //thread_start("k_thread_a,", 31, k_thread_a, "AB\n");
+    //thread_start("k_thread_b", 8, k_thread_b, "CD\n");
     intr_enable();
     //ASSERT(1 == 2);
     while (1)
     {
-        console_put_str("Main\n");
+        //console_put_str("Main\n");
     }
 }
 void k_thread_b(void *arg)
 {
     char *para = arg;
-    PRINT_EIP;
     while (1)
     {
         console_put_str(para);
@@ -47,7 +43,6 @@ void k_thread_b(void *arg)
 void k_thread_a(void *arg)
 {
     char *para = arg;
-    PRINT_EIP;
     while (1)
     {
         console_put_str(para);

@@ -5,7 +5,7 @@
 #include "print.h"
 #include "debug.h"
 
-#define IDT_DESC_CNT 0x21 //目前支持的中断数
+#define IDT_DESC_CNT 0x30 //目前支持的中断数
 
 #define PIC_M_CTRL 0x20 //主片控制端口 0x20
 #define PIC_M_DATA 0x21 //主片数据端口 0x21
@@ -315,11 +315,15 @@ static void pic_init(void)
         | M7 | M6 | M5 | M4 | M3 | M2 | M1 | M0 |
         |  1 |   1|   1|   1|   1|   1|   1|   0| 
     */
-    outb(PIC_M_DATA, 0xfe);
+    //outb(PIC_M_DATA, 0xfe);
     /*
         从片 IRQ 全部关闭 0xff=1111_1111b
     */
-    outb(PIC_S_DATA, 0xff);
+    //outb(PIC_S_DATA, 0xff);
+
+    //只打开键盘中断，其他全部关闭
+    outb(PIC_M_DATA,0xfd);
+    outb(PIC_S_DATA,0xff);
 
     put_str(" pic_init done\n");
 }
