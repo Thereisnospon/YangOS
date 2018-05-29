@@ -1,12 +1,7 @@
 
 %include "boot.inc"
 
-org LOADER_BASE_ADDR
-
-
-jmp loader_start
-
-LOADER_STACK_TOP equ LOADER_BASE_ADDR 
+section loader vstart=LOADER_BASE_ADDR ;坑，，，导致了gdt基址异常问题
 
 
 ; gdt 及其内部的描述符

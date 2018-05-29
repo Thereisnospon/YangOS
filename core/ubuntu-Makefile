@@ -3,7 +3,7 @@ ENTRY_POINT=0xc0001500
 NASM=nasm 
 GCC=gcc 
 LD=ld 
-INC_LIB= -I lib/ -I lib/kerneal -I lib/user -I kerneal/ -I device/ -I thread/
+INC_LIB= -I lib/ -I lib/kerneal -I lib/user -I kerneal/ -I device/ -I thread/ -I userprog/
 ASFLAGS=-f elf 
 #-Wstrict-prototypes 函数声明必须要有参数类型
 #-fno-builtin 不要用内建函数
@@ -16,7 +16,7 @@ OBJS=$(BUILD_DIR)/main.o $(BUILD_DIR)/init.o $(BUILD_DIR)/interrupt.o \
 		$(BUILD_DIR)/timer.o $(BUILD_DIR)/kerneal.o $(BUILD_DIR)/print.o \
 		$(BUILD_DIR)/debug.o $(BUILD_DIR)/memory.o  $(BUILD_DIR)/bitmap.o \
 		$(BUILD_DIR)/string.o $(BUILD_DIR)/thread.o  $(BUILD_DIR)/list.o $(BUILD_DIR)/switch.o \
-		$(BUILD_DIR)/console.o $(BUILD_DIR)/sync.o $(BUILD_DIR)/keyboard.o $(BUILD_DIR)/ioqueue.o 
+		$(BUILD_DIR)/console.o $(BUILD_DIR)/sync.o $(BUILD_DIR)/keyboard.o $(BUILD_DIR)/ioqueue.o $(BUILD_DIR)/tss.o 
 
 #头文件路径
 #include "thread.h" thread/thread.h
@@ -32,7 +32,10 @@ OBJS=$(BUILD_DIR)/main.o $(BUILD_DIR)/init.o $(BUILD_DIR)/interrupt.o \
 #include "print.h" lib/kerneal/print.h
 #include "io.h" lib/kerneal/io.h 
 #include "ioqueue.h" device/ioqueue.h 
+#include "tss.h" userprog/tss.h
 
+$(BUILD_DIR)/tss.o : userprog/tss.c userprog/tss.h lib/stdint.h  kerneal/global.h  lib/string.h lib/kerneal/print.h thread/thread.h
+	$(CC) $(CFLAGS) $< -o $@
 
 $(BUILD_DIR)/ioqueue.o : device/ioqueue.c device/ioqueue.h   kerneal/interrupt.h kerneal/global.h kerneal/debug.h
 	$(CC) $(CFLAGS) $< -o $@

@@ -2,6 +2,7 @@
 ; loader 在硬盘的起始扇区号
 LOADER_START_SECTOR equ 0x2
 LOADER_BASE_ADDR equ 0x900
+LOADER_STACK_TOP equ LOADER_BASE_ADDR
 LOADER_CURRENT_SECTOR_SIZE equ 4
 
 ; kerneal.bin 加载到内存的 buffer 区域

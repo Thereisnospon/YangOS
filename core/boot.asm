@@ -67,7 +67,7 @@ entry:
 		call rd_disk_m_16
 
 ;ox7c8b
-		jmp 0x900
+		 jmp LOADER_BASE_ADDR + 0x300  ;坑，，，导致了gdt基址异常问题
 
 		; mov byte al , [LOADER_BASE_ADDR]
 		; mov byte [gs:0x02],al 

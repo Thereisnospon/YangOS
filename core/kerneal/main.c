@@ -26,8 +26,8 @@ void main(void)
     // test_bitmap();
     // test_assert();
     // test_memory();
-    thread_start("k_thread_a,", 31, k_thread_a, "A");
-    thread_start("k_thread_b", 8, k_thread_b, "B");
+    // thread_start("k_thread_a,", 31, k_thread_a, "A");
+    // thread_start("k_thread_b", 8, k_thread_b, "B");
     intr_enable();
     //ASSERT(1 == 2);
     while (1)
