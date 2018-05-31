@@ -8,14 +8,16 @@
 #include "ioqueue.h"
 #include "keyboard.h"
 #include "interrupt.h"
-
+#include "process.h"
 void test_string(void);
 void test_assert(void);
 void test_bitmap(void);
 void test_memory(void);
 void k_thread_a(void *);
 void k_thread_b(void *);
-
+void u_prog_a(void);
+void u_prog_b(void);
+int test_var_a = 0, test_var_b = 0;
 void main(void)
 {
     clean_screen();
@@ -26,8 +28,10 @@ void main(void)
     // test_bitmap();
     // test_assert();
     // test_memory();
-    // thread_start("k_thread_a,", 31, k_thread_a, "A");
-    // thread_start("k_thread_b", 8, k_thread_b, "B");
+    thread_start("k_thread_a,", 31, k_thread_a, "A");
+    // thread_start("k_thread_b", 31, k_thread_b, "B");
+    process_execute(u_prog_a,"user_proga");
+    // process_execute(u_prog_b, "user_progb");
     intr_enable();
     //ASSERT(1 == 2);
     while (1)
@@ -35,20 +39,14 @@ void main(void)
         //console_put_str("Main\n");
     }
 }
+
 void k_thread_b(void *arg)
 {
-    char *para = arg;
+    char *parb = arg;
     while (1)
     {
-      
-        enum intr_status old_status = intr_disable();
-        if (!ioq_empty(&kbd_buf))
-        {
-            console_put_str(arg);
-            char byte = ioq_getchar(&kbd_buf);
-            console_put_char(byte);
-        }
-        intr_set_status(old_status);
+        console_put_str("v_1:0x");
+        console_put_int(test_var_b);
     }
 }
 void k_thread_a(void *arg)
@@ -56,15 +54,24 @@ void k_thread_a(void *arg)
     char *para = arg;
     while (1)
     {
-        
-        enum intr_status old_status = intr_disable();
-        if (!ioq_empty(&kbd_buf))
-        {
-            console_put_str(arg);
-            char byte = ioq_getchar(&kbd_buf);
-            console_put_char(byte);
-        }
-        intr_set_status(old_status);
+        console_put_str("v_1:0x");
+        console_put_int(test_var_a);
+    }
+}
+void u_prog_a()
+{
+   
+    while (1)
+    { 
+        test_var_a++;
+    }
+}
+void u_prog_b()
+{
+
+    while (1)
+    {
+        test_var_b++;
     }
 }
 void test_memory(void)

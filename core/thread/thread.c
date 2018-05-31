@@ -7,6 +7,7 @@
 #include "list.h"
 #include "print.h"
 #include "interrupt.h"
+#include "process.h"
 
 #define PG_SIZE 4096
 
@@ -83,7 +84,7 @@ void init_thread(struct task_struct *pthread, char *name, int prio)
     //self_kstack 是线程自己在内核态下使用的栈顶地址。 pthread 是pcb最低地址，加上一页大小，是pcb最高地址
     pthread->self_kstack = (uint32_t *)((uint32_t)pthread + PG_SIZE);
     pthread->priority = prio;
-    pthread->ticks = 0;
+    pthread->ticks = prio;
     pthread->elasped_ticks = 0;
     pthread->pgdir = NULL;
     pthread->stack_magic = THREAD_MAGIC_NUM; //自定义魔数
@@ -169,6 +170,8 @@ void schedule()
     //拿到 thread_tag 对应的 task_struct 指针
     struct task_struct *next = elem2entry(struct task_struct, general_tag, thread_tag);
     next->status = TASK_RUNNING;
+    //激活任务页表等
+    process_activate(next);
     switch_to(cur, next);
 }
 

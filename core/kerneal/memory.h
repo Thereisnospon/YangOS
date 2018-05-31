@@ -13,6 +13,8 @@ enum pool_flags{
     PF_USER=2//用户内存池
 };
 void *get_kernel_pages(uint32_t pg_cnt);
+void *get_a_page(enum pool_flags pf, uint32_t vaddr);
+void *get_user_pages(uint32_t pg_cnt);
 #define PG_P_1   1 //页表项或目录项存在属性位
 #define PG_P_0   0   //页表项或目录项存在属性位
 #define PG_RW_R 0   // R/W 属性位 读/执行

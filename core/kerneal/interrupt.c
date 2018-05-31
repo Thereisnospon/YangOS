@@ -373,7 +373,12 @@ void idt_init()
         低 16 位 是 表界限 idt 大小减 1
         先把 idt 地址类型转换为 uint32_t 然后
     */
+    /*
+    一个巨坑，查了 一整天的问题 多了一个括号。。。。
+        貌似这样写先强转 32 位然后左移 16 位 再强转64. 可能会丢失精度。（下面正确的是 转换成 64 位再左移16位
     uint64_t idt_operand = ((sizeof(idt) - 1) | ((uint64_t)((uint32_t)idt << 16)));
+    */
+    uint64_t idt_operand = ((sizeof(idt) - 1) | ((uint64_t)(uint32_t)idt << 16));
     asm volatile("lidt %0" ::"m"(idt_operand));
     put_str("idt_init done\n");
 }

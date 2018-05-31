@@ -219,10 +219,12 @@ void *malloc_page(enum pool_flags pf, uint32_t pg_cnt)
 
 //内核物理内存池申请 pg_cnt 页内存
 void * get_kernel_pages(uint32_t pg_cnt){
+   lock_acquire(&kernel_pool.lock);
     void * vaddr=malloc_page(PF_KERNEL,pg_cnt);
     if(vaddr!=NULL){
         memset(vaddr,0,pg_cnt*PG_SIZE);
     }
+    lock_release(&kernel_pool.lock);
     return vaddr;
 }
 
@@ -339,8 +341,12 @@ static void mem_pool_init(uint32_t all_mem)
     put_int(user_pool.phy_addr_start);
     put_str("\n");
 
+    /* 将位图置0*/
     bitmap_init(&kernel_pool.pool_bitmap);
     bitmap_init(&user_pool.pool_bitmap);
+
+    lock_init(&kernel_pool.lock);
+    lock_init(&user_pool.lock);
 
     //初始化内核虚拟地址位图
     kernel_vaddr.vaddr_bitmap.btmp_bytes_len = kbm_length;

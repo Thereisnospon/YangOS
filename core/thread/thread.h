@@ -10,7 +10,8 @@ typedef void thread_func(void *);
 
 void schedule();
 struct task_struct *running_thread();
-
+extern struct list thread_ready_list;
+extern struct list thread_all_list;
 //进程或者线程状态
 enum task_status
 {
