@@ -115,6 +115,30 @@ get_eip:
     mov eax,[esp]
     ret
 
+[bits 32]
+extern syscall_table
+section .text 
+global syscall_handler
+syscall_handler:
+    push 0  ;保存栈中格式统一
+
+    push ds
+    push es 
+    push fs 
+    push gs 
+    pushad ;32 位寄存器。 入栈顺序
+           ; eax ecx edx ebx esp ebp esi edi 
+    push 0x80 ; 保持栈中格式统一
+    push edx  ;系统调用第3个参数
+    push ecx  ;系统调用第2个参数
+    push ebx  ;系统调用第1个参数
+    call [syscall_table+eax*4] ;子功能处理函数
+    add esp,12 ;越过上面3个参数
+    mov [esp+8*4],eax ;call 调用的子功能处理函数返回值
+                      ; esp+8*4 等于 之前 pushad 压入的 8 个寄存器的 eax 的部分
+                      ; intr_exit 退出时把这个值 弹出到给用户的  eax 中
+    jmp intr_exit
+
 ; // ;          --           --
 ; // ;          | 0 | ss_old  |  <-----  发送特权级切换时 压入的旧栈段 ss   (cpu压入)
 ; // ;          --           --

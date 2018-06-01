@@ -9,6 +9,8 @@
 #include "keyboard.h"
 #include "interrupt.h"
 #include "process.h"
+#include "syscall.h"
+#include "syscall-init.h"
 void test_string(void);
 void test_assert(void);
 void test_bitmap(void);
@@ -18,22 +20,24 @@ void k_thread_b(void *);
 void u_prog_a(void);
 void u_prog_b(void);
 int test_var_a = 0, test_var_b = 0;
+int proga_pid,progb_pid=0;
 void main(void)
 {
     clean_screen();
 
     put_str("I am kerneal\n");
     init_all();
-    //test_string();
-    // test_bitmap();
-    // test_assert();
-    // test_memory();
-    thread_start("k_thread_a,", 31, k_thread_a, "A");
-    // thread_start("k_thread_b", 31, k_thread_b, "B");
-    process_execute(u_prog_a,"user_proga");
-    // process_execute(u_prog_b, "user_progb");
+
+    process_execute(u_prog_a, "user_proga");
+    process_execute(u_prog_b, "user_progb");
+  
     intr_enable();
-    //ASSERT(1 == 2);
+    console_put_str("main pid:0x");
+    console_put_int(sys_getpid());
+    console_put_char('\n');
+
+    thread_start("k_thread_a,", 31, k_thread_a, "A");
+    thread_start("k_thread_b,", 31, k_thread_b, "B");
     while (1)
     {
         //console_put_str("Main\n");
@@ -43,35 +47,43 @@ void main(void)
 void k_thread_b(void *arg)
 {
     char *parb = arg;
-    while (1)
-    {
-        console_put_str("v_1:0x");
-        console_put_int(test_var_b);
+  
+    while(1){
+        console_put_str("thread b pid:0x");
+        console_put_int(sys_getpid());
+        console_put_char('\n');
+        console_put_str("process b pid:0x");
+        console_put_int(progb_pid);
+        console_put_char('\n');
     }
+    
 }
 void k_thread_a(void *arg)
 {
     char *para = arg;
-    while (1)
-    {
-        console_put_str("v_1:0x");
-        console_put_int(test_var_a);
+    while(1){
+        console_put_str("thread a pid:0x");
+        console_put_int(sys_getpid());
+        console_put_char('\n');
+        console_put_str("process a pid:0x");
+        console_put_int(proga_pid);
+        console_put_char('\n');
     }
+    
 }
 void u_prog_a()
 {
-   
-    while (1)
-    { 
-        test_var_a++;
-    }
+   proga_pid = sys_getpid();
+   while(1){
+
+   }
 }
 void u_prog_b()
 {
+    progb_pid = sys_getpid();
 
     while (1)
     {
-        test_var_b++;
     }
 }
 void test_memory(void)
