@@ -18,18 +18,26 @@ void start_process(void *filename_)
     void *function = filename_;
     struct task_struct *cur = running_thread();
     cur->self_kstack += sizeof(struct thread_stack);
+    //在 pcb 的 intr_stack 中准备好相关数据
     struct intr_stack *proc_stack = (struct intr_stack *)cur->self_kstack;
+    //一些寄存器的初始化为0
     proc_stack->edi = proc_stack->esi = proc_stack->ebp = proc_stack->esp_dummy = 0;
-
     proc_stack->ebx = proc_stack->edx = proc_stack->ecx = proc_stack->eax = 0;
-    proc_stack->gs = 0; //用户态用不上，直接初始化为0
+    //用户态用不上，直接初始化为0
+    proc_stack->gs = 0; 
     proc_stack->ds = proc_stack->es = proc_stack->fs = SELECTOR_U_DATA;
-    proc_stack->eip = function; //待执行的用户程序地址
+     // 待执行的用户程序地址 （模拟中断 cpu 压入的 eip 地址
+    proc_stack->eip = function; 
+    // 用户进程的代码段选择子 (特权级3  （模拟中断 cpu 压入 ，实现特权级降级的关键)
     proc_stack->cs = SELECTOR_U_CODE;
+    // 退出中断进入任务后，必须保持继续响应中断 EFLAGS_IF 为 1
+    // 不允许用户进程直接访问硬件 EFLAGS_IOPL 为 0
     proc_stack->eflags = (EFLAGS_IOPL_0 | EFLAGS_MBS | EFLAGS_IF_1);
+    // 用户的 3 特权级的栈 （用户空间申请，（模拟 中断 cpu 压入
     proc_stack->esp = (void *)((uint32_t)get_a_page(PF_USER, USER_STACK3_VADDR) + PG_SIZE);
+    // 用户的 3 特权级的栈段选择子， 模拟中断 cpu 压入
     proc_stack->ss = SELECTOR_U_DATA;
-    //详情见kerneal.asm
+    //详情见kerneal.asm 的解释，说明中断时的操作
     asm volatile("movl %0,%%esp; jmp intr_exit" ::"g"(proc_stack)
                  : "memory");
 }
@@ -58,7 +66,7 @@ void process_activate(struct task_struct *p_thread)
     ASSERT(p_thread != NULL);
 
     //激活该进程或线程的页表
-   //  page_dir_activate(p_thread);
+     page_dir_activate(p_thread);
     
     //更新进程的0特权级栈
     if (p_thread->pgdir)
@@ -105,11 +113,13 @@ void create_user_vaddr_bitmap(struct task_struct *user_prog)
 
 void process_execute(void *filename, char *name)
 {
-    //pcb
+    //内核空间申请 一页内存 作为 进程的 pcb
     struct task_struct *thread = get_kernel_pages(1);
     init_thread(thread, name, default_prio);
+     //为用户进程创建管理虚拟地址空间的位图
     create_user_vaddr_bitmap(thread);
     thread_create(thread, start_process, filename);
+    //创建页表，拷贝内核部分的页目录项
     thread->pgdir = create_page_dir();
     enum intr_status old_status = intr_disable();
     ASSERT(!elem_find(&thread_ready_list, &thread->general_tag));
@@ -119,3 +129,80 @@ void process_execute(void *filename, char *name)
     list_append(&thread_all_list, &thread->all_list_tag);
     intr_set_status(old_status);
 }
+/*
+*********************************************************************
+**                      实现用户进程                                 **
+*********************************************************************
+                        创建过程
+---------------------------------------------------------------------
+process_execute(user_prog,....) {
+    //内核空间申请 一页内存 作为 进程的 pcb
+    thread = get_kernel_pages
+    //初始 thread
+    init_thread(thread,...)
+    //为用户进程创建管理虚拟地址空间的位图
+    create_user_vaddr_bitmap(thread)
+    //创建线程，将 start_process 作为 kernel_thread 的 function 参数
+    thread_create(thread,start_process,user_prog)
+    //创建页表，拷贝内核部分的页目录项
+    thread->pgdir=create_page_dir()
+    list_append(&thread_ready_list,thread...)
+    list_append(&thread_all_list,thread);
+}
+---------------------------------------------------------------------
+                        执行过程
+---------------------------------------------------------------------
+时钟中断发生时，调度器 schedule 从就绪队列 thread_read_list 获取下一个任务
+schedule() {
+    //激活页表，更换 tss 中的 esp0
+    process_activate(thread) {
+        //激活页表，更换页表寄存器
+        page_dir_activate(thread);
+        //对于进程，更新 tss 中的 esp0 为该进程的 0 特权级栈 (pcb+PG_SIZE)pcb顶端
+        if(thread->pgdir) {
+            update_tss_esp(thread);
+        }
+    }
+    switch_to()↓
+}              ↓
+               ↓
+               ↓
+               ↓ 调用
+    kernel_thread(start_process,user_prog){
+        调用 start_process ↓
+    }                     ↓
+                          ↓
+        start_process() {
+            
+            //在 pcb 的 intr_stack 中准备好相关数据
+
+            //一些寄存器的初始化为0
+            proc_stack->edi = proc_stack->esi = proc_stack->ebp = proc_stack->esp_dummy = 0;
+            proc_stack->ebx = proc_stack->edx = proc_stack->ecx = proc_stack->eax = 0;
+            //用户态用不上，直接初始化为0
+            proc_stack->gs = 0; 
+            
+            // 用户进程的数据段选择子（3特权级
+            proc_stack->ds = proc_stack->es = proc_stack->fs = SELECTOR_U_DATA;
+            // 待执行的用户程序地址 （模拟中断 cpu 压入的 eip 地址
+            proc_stack->eip = function; 
+            // 用户进程的代码段选择子 (特权级3  （模拟中断 cpu 压入 ，实现特权级降级的关键)
+            proc_stack->cs = SELECTOR_U_CODE;
+            // 退出中断进入任务后，必须保持继续响应中断 EFLAGS_IF 为 1
+            // 不允许用户进程直接访问硬件 EFLAGS_IOPL 为 0
+            proc_stack->eflags = (EFLAGS_IOPL_0 | EFLAGS_MBS | EFLAGS_IF_1);
+            // 用户的 3 特权级的栈 （用户空间申请，（模拟 中断 cpu 压入
+            proc_stack->esp = (void *)((uint32_t)get_a_page(PF_USER, USER_STACK3_VADDR) + PG_SIZE);
+            // 用户的 3 特权级的栈段选择子， 模拟中断 cpu 压入
+            proc_stack->ss = SELECTOR_U_DATA;
+            //详情见kerneal.asm 的解释，说明中断时的操作
+            asm volatile("movl %0,%%esp; jmp intr_exit" ::"g"(proc_stack)
+                 : "memory");↓
+        }                    ↓
+                             ↓
+            intr_exit{
+                ↓
+            }   ↓
+                ↓
+                user_prog()
+*/
