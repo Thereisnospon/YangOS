@@ -377,6 +377,56 @@ void idt_init()
     一个巨坑，查了 一整天的问题 多了一个括号。。。。
         貌似这样写先强转 32 位然后左移 16 位 再强转64. 可能会丢失精度。（下面正确的是 转换成 64 位再左移16位
     uint64_t idt_operand = ((sizeof(idt) - 1) | ((uint64_t)((uint32_t)idt << 16)));
+    问题查询（崩溃前的info tab 查看中断表）：
+        Interrupt Descriptor Table (base=0x00000000c00071a0, limit=383): （正确形式的左移
+        Interrupt Descriptor Table (base=0x00000000000071a0, limit=383):  (错误的左移
+    可以看出 32 位数据的 0xc00071a0 左移 16 位 会正好丢掉 高位的 c0 部分 成为 0x71a0 ,然后 转换成 64位
+    而正确形式的转换是 转换成了 64 位再左移 ，高位没有丢弃， 仍然是 0xc00071a0
+    再看崩溃的地方，
+    enum intr_status intr_enable() {
+        enum intr_status old_status;
+        if(INTR_ON==intr_get_status()){
+            old_status=INTR_ON;
+            return old_status;
+        }else{
+            old_status=INTR_OFF;
+            asm volatile("sti"); //开中断 sti 指令把 IF 位置 1
+            return old_status; // 汇编指令为 :
+                               //  leave 每次都是断点在这里再 s 继续执行的时候崩溃了
+                               //  ret
+        }
+    }
+    每次都是在 leave 执行的时候崩溃，leave 相当于: mov esp ebp ; pop ebp . 
+    一开始查的是页表的问题，（禁止切换经常页表时程序正常执行） 怀疑 esp,ebp 有问题。
+    根据以上分析，应当是这样的:
+        
+        1. 切换进程前，激活了进程的页表。 进程的页表只拷贝了内核的 0x300 项后面的部分
+          
+        cr3: 0x0000000000100000 （激活进程页表前的页表）
+        0x00000000-0x000fffff -> 0x0000000000000000-0x00000000000fffff （映射了虚拟地址 0x0~0xfffff 到物理地址 0x0~0xfffff
+        0x00100000-0x00118fff -> 0x0000000000200000-0x0000000000218fff
+        0xc0000000-0xc00fffff -> 0x0000000000000000-0x00000000000fffff  (映射了虚拟地址 0xc0000000~0xc00fffff 到物理地址 0x0~0xfffff
+        0xc0100000-0xc0118fff -> 0x0000000000200000-0x0000000000218fff
+        0xffc00000-0xffc00fff -> 0x0000000000101000-0x0000000000101fff
+        0xfff00000-0xffffefff -> 0x0000000000101000-0x00000000001fffff
+        0xfffff000-0xffffffff -> 0x0000000000100000-0x0000000000100fff
+
+        cr3: 0x0000000000218000
+        0xc0000000-0xc00fffff -> 0x0000000000000000-0x00000000000fffff 只映射了虚拟地址 0xc0000000~0xc00fffff 到物理地址 0x0~0xfffff
+        0xc0100000-0xc0118fff -> 0x0000000000200000-0x0000000000218fff
+        0xfff00000-0xffffefff -> 0x0000000000101000-0x00000000001fffff
+        0xfffff000-0xffffffff -> 0x0000000000218000-0x0000000000218fff
+
+        看出，激活进程页表后，缺少了 低地址的映射，而此时的 idt 地址为 0x71a0
+
+        2. leave 指令前 执行了 开中断
+        3. 预测应该是 开中断时 正好出现了一个中断，然后 cpu 查找 idtr 寄存器查找到 0x71a0
+        4. 由于开启了分页，所有地址视为虚拟地址，然后去进程的 页表查，没有查到该 地址对应的页表信息 ？ 然后应该又引发缺页中断 
+           去查找缺页中断处理程序，又去查找 idtr 。然后就崩溃了。。。
+        看上去是在 leave 指令上崩溃的，其实是正好在这里响应中断崩了。。
+
+        问题就是 计算 idt 地址的时候 损失了高位。。 但是正好 0x71a0 这个地址对于 之前的内核是进行了映射的，所以处理正常
+        而用户进程没有这段的页表。。
     */
     uint64_t idt_operand = ((sizeof(idt) - 1) | ((uint64_t)(uint32_t)idt << 16));
     asm volatile("lidt %0" ::"m"(idt_operand));
