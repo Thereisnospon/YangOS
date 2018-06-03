@@ -22,6 +22,8 @@ void u_prog_a(void);
 void u_prog_b(void);
 int test_var_a = 0, test_var_b = 0;
 int proga_pid,progb_pid=0;
+void a_end();
+void b_end();
 void main(void)
 {
     clean_screen();
@@ -29,7 +31,7 @@ void main(void)
     put_str("I am kerneal\n");
     init_all();
 
-    // process_execute(u_prog_a, "user_proga");
+    process_execute(u_prog_a, "user_proga");
     // process_execute(u_prog_b, "user_progb");
   
     intr_enable();
@@ -37,52 +39,110 @@ void main(void)
     // console_put_int(getpid());
     // console_put_char('\n');
 
-    thread_start("k_thread_a,", 31, k_thread_a, "A");
-    // thread_start("k_thread_b,", 31, k_thread_b, "B");
+  //  thread_start("k_thread_a,", 31, k_thread_a, "A");
+   //  thread_start("k_thread_b,", 31, k_thread_b, "B");
     while (1)
     {
         //console_put_str("Main\n");
     }
 }
+void a_end(){
+    
+    while(1){
+        /* code */
+    }
+    
+}
+void b_end2(){
 
+}
+void b_end(){
+    
+}
 void k_thread_b(void *arg)
 {
-    char *parb = arg;
-    console_put_str("thread b pid:0x");
-    console_put_int(getpid());
-    console_put_char('\n');
-    console_put_str("process b pid:0x");
-    console_put_int(progb_pid);
-    console_put_char('\n');
-    while(1) {
-       
-    }
+  
+    console_put_str(" thread_b start\n");
+    console_put_str(" thread_b end\n");
+    
+    void *arg1 = sys_malloc(30);
+    b_end();
+    sys_free(arg1);
+    b_end2();
+    while (1){
+        ;
+    }     
 }
 void k_thread_a(void *arg)
 {
     char *para = arg;
-
-    int size=16;
-    while (size < 2049)
+    void *addr1;
+    void *addr2;
+    void *addr3;
+    void *addr4;
+    void *addr5;
+    void *addr6;
+    void *addr7;
+    console_put_str(" thread_a start\n");
+    int max = 1000;
+    while (max-- > 0)
     {
-        void *addr = sys_malloc(100);
-        console_put_str("size=0x");
-        console_put_int(size);
-        console_put_str("  addr=0x");
-        console_put_int((uint32_t)addr);
-        console_put_char('\n');
+        console_put_int(max);
+        int size = 128;
+        addr1 = sys_malloc(size);
         size *= 2;
+        addr2 = sys_malloc(size);
+        size *= 2;
+        addr3 = sys_malloc(size);
+        sys_free(addr1);
+        addr4 = sys_malloc(size);
+        size *= 2;
+        size *= 2;
+        size *= 2;
+        size *= 2;
+        size *= 2;
+        size *= 2;
+        size *= 2;
+        addr5 = sys_malloc(size);
+        addr6 = sys_malloc(size);
+        sys_free(addr5);
+        size *= 2;
+        addr7 = sys_malloc(size);
+        sys_free(addr6);
+        sys_free(addr7);
+        sys_free(addr2);
+        sys_free(addr3);
+        sys_free(addr4);
+      
     }
-    while(1){
-       
-    }
+    console_put_str(" thread_a end\n");
+    a_end();
+    while (1)
+        ;
 }
+
 void u_prog_a()
 {
-   proga_pid = getpid();
-  printf("u_prog_a pid=0x%d\n",proga_pid);
-  printf("test c:=%c s=:%s +d:=%d -d=:%d x=:0x%x \n",'A' ,"hello world", 100,-100,15);
-   while(1){
+    int size=1;
+    void*ptrs[30];
+    int cnt=0;
+    while(size<2049){
+        void *p1=malloc(size);
+        ptrs[cnt++]=p1;
+        printf("size=%d addr=0x%x\n",size,p1);
+        size*=2;
+    }
+
+    while(cnt--){
+        printf("free addr=0x%x\n", ptrs[cnt]);
+        free(ptrs[cnt]);
+     
+    }
+    
+    
+
+    while (1)
+    {
 
    }
 }
