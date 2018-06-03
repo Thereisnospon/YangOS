@@ -345,7 +345,8 @@ static void idt_desc_init(void)
     {
         make_idt_desc(&idt[i], IDT_DESC_ATTR_DPL0, intr_entry_table[i]);
     }
-    make_idt_desc(&idt[i],IDT_DESC_ATTR_DPL3,syscall_handler);
+    //0x80 系统调用对应的中断门的 dep为 3
+    make_idt_desc(&idt[lastindex], IDT_DESC_ATTR_DPL3, syscall_handler);
     put_str(" idt_desc_init done\n");
 }
 

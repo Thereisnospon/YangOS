@@ -33,7 +33,7 @@ void main(void)
   
     intr_enable();
     console_put_str("main pid:0x");
-    console_put_int(sys_getpid());
+    console_put_int(getpid());
     console_put_char('\n');
 
     thread_start("k_thread_a,", 31, k_thread_a, "A");
@@ -47,41 +47,40 @@ void main(void)
 void k_thread_b(void *arg)
 {
     char *parb = arg;
-  
+    console_put_str("thread b pid:0x");
+    console_put_int(getpid());
+    console_put_char('\n');
+    console_put_str("process b pid:0x");
+    console_put_int(progb_pid);
+    console_put_char('\n');
     while(1){
-        console_put_str("thread b pid:0x");
-        console_put_int(sys_getpid());
-        console_put_char('\n');
-        console_put_str("process b pid:0x");
-        console_put_int(progb_pid);
-        console_put_char('\n');
+       
     }
     
 }
 void k_thread_a(void *arg)
 {
     char *para = arg;
+    console_put_str("thread a pid:0x");
+    console_put_int(getpid());
+    console_put_char('\n');
+    console_put_str("process a pid:0x");
+    console_put_int(proga_pid);
+    console_put_char('\n');
     while(1){
-        console_put_str("thread a pid:0x");
-        console_put_int(sys_getpid());
-        console_put_char('\n');
-        console_put_str("process a pid:0x");
-        console_put_int(proga_pid);
-        console_put_char('\n');
+       
     }
-    
 }
 void u_prog_a()
 {
-   proga_pid = sys_getpid();
+   proga_pid = getpid();
    while(1){
 
    }
 }
 void u_prog_b()
 {
-    progb_pid = sys_getpid();
-
+    progb_pid = getpid();
     while (1)
     {
     }
