@@ -93,6 +93,7 @@ struct task_struct
     struct list_elem all_list_tag; //用于线程队列 thread_all_list 中的节点
     uint32_t *pgdir;               //进程自己的页表的虚拟地址
     struct virtual_addr userprog_vaddr;//用户进程的虚拟地址
+    struct mem_block_desc u_block_desc[DESC_CNT]; //用户进程内存块描述符
     uint32_t stack_magic;          //栈的边界标记，用于检测栈的溢出
 };
 

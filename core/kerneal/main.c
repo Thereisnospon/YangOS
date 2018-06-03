@@ -29,7 +29,7 @@ void main(void)
     put_str("I am kerneal\n");
     init_all();
 
-    process_execute(u_prog_a, "user_proga");
+    // process_execute(u_prog_a, "user_proga");
     // process_execute(u_prog_b, "user_progb");
   
     intr_enable();
@@ -37,7 +37,7 @@ void main(void)
     // console_put_int(getpid());
     // console_put_char('\n');
 
-    // thread_start("k_thread_a,", 31, k_thread_a, "A");
+    thread_start("k_thread_a,", 31, k_thread_a, "A");
     // thread_start("k_thread_b,", 31, k_thread_b, "B");
     while (1)
     {
@@ -54,20 +54,25 @@ void k_thread_b(void *arg)
     console_put_str("process b pid:0x");
     console_put_int(progb_pid);
     console_put_char('\n');
-    while(1){
+    while(1) {
        
     }
-    
 }
 void k_thread_a(void *arg)
 {
     char *para = arg;
-    console_put_str("thread a pid:0x");
-    console_put_int(getpid());
-    console_put_char('\n');
-    console_put_str("process a pid:0x");
-    console_put_int(proga_pid);
-    console_put_char('\n');
+
+    int size=16;
+    while (size < 2049)
+    {
+        void *addr = sys_malloc(100);
+        console_put_str("size=0x");
+        console_put_int(size);
+        console_put_str("  addr=0x");
+        console_put_int((uint32_t)addr);
+        console_put_char('\n');
+        size *= 2;
+    }
     while(1){
        
     }
