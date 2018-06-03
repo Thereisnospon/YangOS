@@ -2,7 +2,7 @@
 #include "print.h"
 #include "interrupt.h"
 #include "memory.h"
-#include "../device/timer.h"
+#include "timer.h"
 #include "thread.h"
 #include "console.h"
 #include "keyboard.h"

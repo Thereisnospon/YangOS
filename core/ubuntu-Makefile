@@ -1,3 +1,23 @@
+device/console.c_hs= device/console.h lib/kerneal/print.h lib/stdint.h thread/sync.h thread/thread.h
+device/ioqueue.c_hs= device/ioqueue.h kerneal/interrupt.h kerneal/global.h kerneal/debug.h
+device/keyboard.c_hs= device/keyboard.h lib/kerneal/print.h kerneal/interrupt.h lib/kerneal/io.h kerneal/global.h device/ioqueue.h
+device/timer.c_hs= device/timer.h lib/kerneal/io.h lib/kerneal/print.h thread/thread.h kerneal/debug.h
+kerneal/debug.c_hs= kerneal/debug.h lib/kerneal/print.h kerneal/interrupt.h
+kerneal/init.c_hs= kerneal/init.h lib/kerneal/print.h kerneal/interrupt.h kerneal/memory.h device/timer.h thread/thread.h device/console.h device/keyboard.h userprog/tss.h userprog/syscall-init.h
+kerneal/interrupt.c_hs= kerneal/interrupt.h lib/stdint.h kerneal/global.h lib/kerneal/io.h lib/kerneal/print.h kerneal/debug.h
+kerneal/main.c_hs= lib/kerneal/print.h kerneal/init.h kerneal/debug.h lib/string.h lib/kerneal/bitmap.h kerneal/memory.h device/console.h device/ioqueue.h device/keyboard.h kerneal/interrupt.h userprog/process.h lib/user/syscall.h userprog/syscall-init.h lib/stdio.h
+kerneal/memory.c_hs= kerneal/memory.h lib/kerneal/bitmap.h lib/stdint.h kerneal/global.h kerneal/debug.h lib/kerneal/print.h lib/string.h thread/sync.h kerneal/interrupt.h
+lib/kerneal/bitmap.c_hs= lib/kerneal/bitmap.h lib/stdint.h lib/string.h lib/kerneal/print.h kerneal/interrupt.h kerneal/debug.h
+lib/kerneal/list.c_hs= lib/kerneal/list.h kerneal/interrupt.h lib/stdint.h lib/kerneal/print.h kerneal/debug.h
+lib/stdio.c_hs= lib/stdio.h kerneal/interrupt.h kerneal/global.h lib/string.h lib/user/syscall.h lib/kerneal/print.h
+lib/string.c_hs= lib/string.h kerneal/global.h kerneal/debug.h
+lib/user/syscall.c_hs= lib/user/syscall.h
+thread/sync.c_hs= thread/sync.h lib/kerneal/list.h kerneal/global.h kerneal/debug.h kerneal/interrupt.h
+thread/thread.c_hs= thread/thread.h lib/stdint.h lib/string.h kerneal/global.h kerneal/memory.h kerneal/debug.h lib/kerneal/list.h lib/kerneal/print.h kerneal/interrupt.h userprog/process.h thread/sync.h
+userprog/process.c_hs= userprog/process.h kerneal/global.h kerneal/debug.h kerneal/memory.h thread/thread.h lib/kerneal/list.h userprog/tss.h kerneal/interrupt.h lib/string.h device/console.h kerneal/debug.h
+userprog/syscall-init.c_hs= userprog/syscall-init.h lib/user/syscall.h lib/stdint.h lib/kerneal/print.h thread/thread.h device/console.h lib/string.h kerneal/memory.h
+userprog/tss.c_hs= kerneal/debug.h userprog/tss.h lib/stdint.h kerneal/global.h lib/string.h lib/kerneal/print.h
+
 BUILD_DIR=build
 ENTRY_POINT=0xc0001500
 NASM=nasm 
@@ -37,76 +57,62 @@ OBJS=$(BUILD_DIR)/main.o $(BUILD_DIR)/init.o $(BUILD_DIR)/interrupt.o \
 #include "string.h" lib/string.h
 #include "thread.h" thread/thread.h
 
-$(BUILD_DIR)/stdio.o: lib/stdio.c lib/stdio.h lib/stdint.h kerneal/interrupt.h \
-    	lib/stdint.h kerneal/global.h lib/string.h lib/user/syscall.h lib/kerneal/print.h
+$(BUILD_DIR)/stdio.o: lib/stdio.c $(lib/stdio.c_hs)
 	$(CC) $(CFLAGS) $< -o $@
 
-$(BUILD_DIR)/syscall.o: lib/user/syscall.c lib/user/syscall.h lib/stdint.h
+$(BUILD_DIR)/syscall.o: lib/user/syscall.c $(lib/user/syscall.c_hs)
 	$(CC) $(CFLAGS) $< -o $@
 
-$(BUILD_DIR)/syscall-init.o: userprog/syscall-init.c userprog/syscall-init.h \
-    	lib/stdint.h lib/user/syscall.h lib/kerneal/print.h thread/thread.h \
-     	lib/kerneal/list.h kerneal/global.h lib/kerneal/bitmap.h kerneal/memory.h
+$(BUILD_DIR)/syscall-init.o: userprog/syscall-init.c $(userprog/syscall-init.c_hs)
 	$(CC) $(CFLAGS) $< -o $@
 
-$(BUILD_DIR)/process.o : userprog/process.c userprog/process.h kerneal/global.h  kerneal/memory.h  thread/thread.h lib/kerneal/list.h userprog/tss.h  kerneal/interrupt.h  lib/string.h device/console.h
+$(BUILD_DIR)/process.o : userprog/process.c $(userprog/process.c_hs) 
 	$(CC) $(CFLAGS) $< -o $@
 
-$(BUILD_DIR)/tss.o : userprog/tss.c userprog/tss.h lib/stdint.h  kerneal/global.h  lib/string.h lib/kerneal/print.h thread/thread.h
+$(BUILD_DIR)/tss.o : userprog/tss.c $(userprog/tss.c_hs)
 	$(CC) $(CFLAGS) $< -o $@
 
-$(BUILD_DIR)/ioqueue.o : device/ioqueue.c device/ioqueue.h   kerneal/interrupt.h kerneal/global.h kerneal/debug.h
+$(BUILD_DIR)/ioqueue.o : device/ioqueue.c  $(device/ioqueue.c_hs)
 	$(CC) $(CFLAGS) $< -o $@
 
-$(BUILD_DIR)/keyboard.o: device/keyboard.c device/keyboard.h  lib/kerneal/print.h  kerneal/interrupt.h\
-	lib/kerneal/io.h   kerneal/global.h 
+$(BUILD_DIR)/keyboard.o: device/keyboard.c $(device/keyboard.c_hs)
 	$(CC) $(CFLAGS) $< -o $@
 
-$(BUILD_DIR)/console.o: device/console.c device/console.h  lib/kerneal/print.h thread/sync.h thread/thread.h
+$(BUILD_DIR)/console.o: device/console.c $(device/console.c_hs)
 	$(CC) $(CFLAGS) $< -o $@
 #c 代码编译
-$(BUILD_DIR)/sync.o : thread/sync.c thread/sync.h lib/kerneal/list.h kerneal/global.h kerneal/debug.h kerneal/interrupt.h
+$(BUILD_DIR)/sync.o : thread/sync.c $(thread/sync.c_hs)
 	$(CC) $(CFLAGS) $< -o $@
 	
-$(BUILD_DIR)/list.o: lib/kerneal/list.c lib/kerneal/list.h kerneal/interrupt.h lib/stdint.h 
+$(BUILD_DIR)/list.o: lib/kerneal/list.c $(lib/kerneal/list.c_hs)
 	$(CC) $(CFLAGS) $< -o $@
 
-$(BUILD_DIR)/thread.o: thread/thread.c thread/thread.h\
-	lib/stdint.h lib/string.h kerneal/global.h kerneal/memory.h lib/kerneal/list.h kerneal/debug.h
+$(BUILD_DIR)/thread.o: thread/thread.c $(thread/thread.c_hs)
 	$(CC) $(CFLAGS) $< -o $@
 
-$(BUILD_DIR)/memory.o : kerneal/memory.c kerneal/memory.h  lib/stdint.h lib/kerneal/print.h
+$(BUILD_DIR)/memory.o : kerneal/memory.c $(kerneal/memory.c_hs)
 	$(CC) $(CFLAGS) $< -o $@
 
-$(BUILD_DIR)/bitmap.o: lib/kerneal/bitmap.c lib/kerneal/bitmap.h  lib/kerneal/print.h  \
-			kerneal/interrupt.h kerneal/debug.h lib/string.h \
-			kerneal/global.h lib/stdint.h 
+$(BUILD_DIR)/bitmap.o: lib/kerneal/bitmap.c $(lib/kerneal/bitmap.c_hs)
 	$(CC) $(CFLAGS) $< -o $@
 	
-$(BUILD_DIR)/string.o: lib/string.c lib/string.h lib/stdint.h kerneal/global.h \
-	lib/stdint.h kerneal/debug.h
+$(BUILD_DIR)/string.o: lib/string.c $(lib/string.c_hs)
 	$(CC) $(CFLAGS) $< -o $@
 
-$(BUILD_DIR)/main.o :kerneal/main.c lib/kerneal/print.h \
-	lib/stdint.h kerneal/init.h   kerneal/debug.h
+$(BUILD_DIR)/main.o :kerneal/main.c $(kerneal/main.c_hs)
 	$(GCC) $(CFLAGS) $< -o $@
 
-$(BUILD_DIR)/init.o:kerneal/init.c kerneal/init.h lib/kerneal/print.h \
-	lib/stdint.h kerneal/interrupt.h device/timer.h thread/thread.h
+$(BUILD_DIR)/init.o:kerneal/init.c $(kerneal/init.c_hs)
 	$(GCC) $(CFLAGS) $< -o $@
 
-$(BUILD_DIR)/interrupt.o: kerneal/interrupt.c kerneal/interrupt.h \
-	lib/stdint.h kerneal/global.h lib/kerneal/io.h lib/kerneal/print.h kerneal/debug.h
+$(BUILD_DIR)/interrupt.o: kerneal/interrupt.c $(kerneal/interrupt.c_hs)
 	$(GCC) $(CFLAGS) $< -o $@
 
-$(BUILD_DIR)/timer.o : device/timer.c device/timer.h lib/stdint.h \
-	lib/kerneal/io.h lib/kerneal/print.h 
+$(BUILD_DIR)/timer.o : device/timer.c $(device/timer.c_hs)
 	$(GCC) $(CFLAGS) $< -o $@
 
-$(BUILD_DIR)/debug.o : kerneal/debug.c kerneal/debug.h \
-	lib/kerneal/print.h lib/stdint.h kerneal/interrupt.h 
+$(BUILD_DIR)/debug.o : kerneal/debug.c $(kerneal/debug.c_hs)
 	$(GCC) $(CFLAGS) $< -o $@
-
 
 #汇编代码编译
 
@@ -128,6 +134,4 @@ $(BUILD_DIR)/kerneal.bin : $(OBJS)
 mk_dir:
 	if([[! -d $(BUILD_DIR)]]);then mkdir $(BUILD_DIR) ;fi 
 
-go:$(BUILD_DIR)/kerneal.bin 
-	echo "go"
-	
+
