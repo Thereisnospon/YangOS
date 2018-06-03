@@ -11,6 +11,7 @@
 #include "process.h"
 #include "syscall.h"
 #include "syscall-init.h"
+#include "stdio.h"
 void test_string(void);
 void test_assert(void);
 void test_bitmap(void);
@@ -29,15 +30,15 @@ void main(void)
     init_all();
 
     process_execute(u_prog_a, "user_proga");
-    process_execute(u_prog_b, "user_progb");
+    // process_execute(u_prog_b, "user_progb");
   
     intr_enable();
-    console_put_str("main pid:0x");
-    console_put_int(getpid());
-    console_put_char('\n');
+    // console_put_str("main pid:0x");
+    // console_put_int(getpid());
+    // console_put_char('\n');
 
-    thread_start("k_thread_a,", 31, k_thread_a, "A");
-    thread_start("k_thread_b,", 31, k_thread_b, "B");
+    // thread_start("k_thread_a,", 31, k_thread_a, "A");
+    // thread_start("k_thread_b,", 31, k_thread_b, "B");
     while (1)
     {
         //console_put_str("Main\n");
@@ -74,6 +75,8 @@ void k_thread_a(void *arg)
 void u_prog_a()
 {
    proga_pid = getpid();
+  printf("u_prog_a pid=0x%d\n",proga_pid);
+  printf("test c:=%c s=:%s +d:=%d -d=:%d x=:0x%x \n",'A' ,"hello world", 100,-100,15);
    while(1){
 
    }
