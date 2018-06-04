@@ -17,12 +17,13 @@ def re_match(pattern, str):
 
 # 打开 path 路径的文件，对于每行，使用 consumer 方法处理，如果 consumer 返回 False 则不继续处理后面的行
 def read_file_foreach_line(path, consumer):
-    file = open(path, mode="r", encoding="utf-8")
-    while (True):
-        _line = file.readline()
-        if (not consumer(_line)):
-            break
-    file.close()
+    with open(path, mode="r", encoding="utf-8") as file:
+        while (True):
+            _line = file.readline()
+            if(not _line):
+                break
+            if (not consumer(_line)):
+                break
 
 
 # 找到文件中的 #include 的行
@@ -53,21 +54,55 @@ def traversal(rootDir, func):
             func(path)
 
 
-if (len(sys.argv) <= 1):
-    print("没有提供参数")
+
+
+
+
+def read_by_eof(path):
+    global c
+    c = ""
+    def g(line):
+        global  c
+        c=c+line
+        return not(line=="EOF_EOF_EOF=eof_eof_eof\n")
+    read_file_foreach_line(path,g)
+    return c
+
+if (len(sys.argv) < 2):
+    print("没有提供参数 工作路径，src makefile 文件， dst makefile 文件")
+    exit(1)
+if (len(sys.argv) < 3):
+    print("没有提供参数 src makefile 文件， dst makefile 文件")
+    exit(1)
+if (len(sys.argv) < 4):
+    print("没有提供参数 dst makefile 文件")
     exit(1)
 
 scan_dir = sys.argv[1]
+src_makefile= sys.argv[2]
+dst_makefile=sys.argv[3]
 
 if (not os.path.exists(scan_dir)):
     print(scan_dir + " 路径不存在")
     exit(2)
+
+if (not os.path.exists(src_makefile)):
+    print(src_makefile + " 路径不存在")
+    exit(2)
+
+if (not os.path.exists(dst_makefile)):
+    print(dst_makefile + " 路径不存在")
+    exit(2)
+
 if (not os.path.isdir(scan_dir)):
     print(scan_dir + " 不是文件夹")
     exit(3)
 
 path_prefix_len = len(scan_dir)
 g_h_dicts = {}
+
+
+
 
 
 # 将 .h 文件进行映射 文件名:相对路径
@@ -92,7 +127,11 @@ def depends(include_h_list):
     return name
 
 
+global lines
+lines=""
+
 def deal_c(path):
+    global  lines
     _dict = {}
     if (path.endswith(".c")):
         _lsit = pars_file_includes(path)
@@ -100,7 +139,16 @@ def deal_c(path):
     for (k, v) in _dict.items():
         incs = depends(v);
         name = path[path_prefix_len:len(path)]
-        print(name + "_hs=" + incs)
-
+        lines=lines+name + "_hs=" + incs +"\n"
 
 traversal(scan_dir, deal_c)
+
+elf_pre_lines = read_by_eof(src_makefile)
+
+if (not elf_pre_lines.endswith("EOF_EOF_EOF=eof_eof_eof\n")):
+    print("file not end with EOF_EOF_EOF=eof_eof_eof")
+    exit(1)
+
+with open(dst_makefile, mode="w", encoding="utf-8") as file:
+    file.write(elf_pre_lines+lines)
+

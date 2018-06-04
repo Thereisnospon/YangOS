@@ -26,6 +26,8 @@ OUT_F_BOOT_BIN=$(OUT_BUILD)boot.bin
 C_DIR=/Users/yzr/repos/YangOS/core
 META_FILES = meta-files
 
+UB_MAKE_FILE=/Users/yzr/repos/YangOS/core/ubuntu-Makefile
+
 # 确保 32bit的 ubuntu docker 的 contaienr 是在后台 Running 的。
 check_docker:
 	$(PTYON) $(DOCKER_CLIENT) --src . --name osgo
@@ -87,9 +89,8 @@ clean:
 	$(DEL) -rf $(OUT_BUILD)*.o
 
 #解析头文件依赖
-make_hs:
-	$(PYTHON3)  $(TOOLPATH)find_hs.py  $(C_DIR)
-
+hs:
+	$(PYTHON3)  $(TOOLPATH)find_hs.py  $(C_DIR) $(UB_MAKE_FILE) $(UB_MAKE_FILE)
 
 #meta-files 里放置了创建好了分区表的硬盘文件
 #解压它到meta-files 目录
