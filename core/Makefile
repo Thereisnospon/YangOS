@@ -25,9 +25,10 @@ OUT_F_OS_IMG=$(OUT_BUILD)os.img
 OUT_F_BOOT_BIN=$(OUT_BUILD)boot.bin
 C_DIR=/Users/yzr/repos/YangOS/core
 META_FILES = meta-files
+PY_TOOLS=$(TOOLPATH)py-tools
 
 UB_MAKE_FILE=/Users/yzr/repos/YangOS/core/ubuntu-Makefile
-
+MAKE_FILE=/Users/yzr/repos/YangOS/core/Makefile
 # 确保 32bit的 ubuntu docker 的 contaienr 是在后台 Running 的。
 check_docker:
 	$(PTYON) $(DOCKER_CLIENT) --src . --name osgo
@@ -49,11 +50,10 @@ $(OUT_F_KERNEAL_BIN):$(KERNEAL)*.c $(KERNEAL)*.h $(KERNEAL_LIB)*.c $(KERNEAL_LIB
 	echo "gogo"
 	docker exec -it osgo make -f ubuntu-Makefile  go
 # 系统镜像
-$(OUT_F_OS_IMG):$(OUT_F_BOOT_BIN) $(OUT_F_LOADER_BIN)
+$(OUT_F_OS_IMG):$(OUT_F_BOOT_BIN) $(OUT_F_LOADER_BIN) build/kerneal.bin 
 	rm -f $(OUT_F_OS_IMG)
 	
 	#强制
-	docker exec -it osgo make -f ubuntu-Makefile  go
 
 	$(BXIMAGE) -hd -mode='flat' -size=$(SIZE) -q  $(OUT_F_OS_IMG) 
 	# MBR 放在 0 扇区
@@ -68,6 +68,8 @@ $(OUT_F_OS_IMG):$(OUT_F_BOOT_BIN) $(OUT_F_LOADER_BIN)
 $(OUT_F_BOOT_BIN):boot.asm boot.inc
 	$(NASM) boot.asm -o $(OUT_F_BOOT_BIN) 
 
+build/kerneal.bin:$(OBJS)
+	docker exec -it osgo make -f ubuntu-Makefile  go
 
 #这里的 hd80 文件是用事先已经创建并分区号的文件。避免每次繁琐的分区过程。
 
@@ -90,7 +92,20 @@ clean:
 
 #解析头文件依赖
 hs:
-	$(PYTHON3)  $(TOOLPATH)find_hs.py  $(C_DIR) $(UB_MAKE_FILE) $(UB_MAKE_FILE)
+	$(PYTHON3) $(PY_TOOLS)/find_hs.py --scandir $(C_DIR) --u_src_mk $(UB_MAKE_FILE)\
+		--u_dst_mk $(UB_MAKE_FILE)\
+		--g_src_mk $(MAKE_FILE)\
+		--g_dst_mk $(MAKE_FILE)\
+		--mode hs 
+mobjs:
+	$(PYTHON3) $(PY_TOOLS)/find_hs.py --scandir $(C_DIR) --u_src_mk $(UB_MAKE_FILE)\
+		--u_dst_mk $(UB_MAKE_FILE)\
+		--g_src_mk $(MAKE_FILE)\
+		--g_dst_mk $(MAKE_FILE)\
+		--mode objs 
+all_gf:
+	make hs
+	make mobjs
 
 #meta-files 里放置了创建好了分区表的硬盘文件
 #解压它到meta-files 目录
@@ -242,3 +257,14 @@ touch_hd80:
 # build/hd80.img9             121         162       21136+  66  Unknown
 
 #STEP9: 按9 写入文件退出
+
+
+EOF_EOF_EOF=eof_eof_eof
+OBJS=$(BUILD_DIR)/main.o $(BUILD_DIR)/init.o $(BUILD_DIR)/interrupt.o \
+		$(BUILD_DIR)/timer.o $(BUILD_DIR)/kerneal.o $(BUILD_DIR)/print.o \
+		$(BUILD_DIR)/debug.o $(BUILD_DIR)/memory.o  $(BUILD_DIR)/bitmap.o \
+		$(BUILD_DIR)/string.o $(BUILD_DIR)/thread.o  $(BUILD_DIR)/list.o $(BUILD_DIR)/switch.o \
+		$(BUILD_DIR)/console.o $(BUILD_DIR)/sync.o $(BUILD_DIR)/keyboard.o $(BUILD_DIR)/ioqueue.o $(BUILD_DIR)/tss.o \
+		$(BUILD_DIR)/process.o $(BUILD_DIR)/syscall.o $(BUILD_DIR)/syscall-init.o $(BUILD_DIR)/stdio.o \
+		$(BUILD_DIR)/stdio-kernel.o
+OBJS_END=objs_end
