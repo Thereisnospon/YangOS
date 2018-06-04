@@ -1,1 +1,5 @@
 build/
+meta-files/*.img
+meta-files/*.o
+meta-files/*.bin
+

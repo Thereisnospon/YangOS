@@ -32,7 +32,8 @@ mac 平台编译需要一些 gcc ld 指令。 各种原因(mac  用的clang,并�
 
 img 格式操作。
 
+## 相关知识
 
+### 硬盘
 
-
-
+- [硬盘知识简介](https://www.jianshu.com/p/9aa66f634ed6)
