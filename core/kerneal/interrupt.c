@@ -321,10 +321,12 @@ static void pic_init(void)
     */
     //outb(PIC_S_DATA, 0xff);
 
-    /* 只打开时钟和键盘中断，其它全部关闭 */
-    outb(PIC_M_DATA, 0xfc);
-    outb(PIC_S_DATA, 0xff);
-
+    //IRQ2 打开（级联从片), 主片的IRQ0 时钟中断， IRQ1 的键盘中断
+    // 1111 1000 =0xf8
+    outb(PIC_M_DATA,0xf8);
+    //打开从片的 IRQ14,硬盘控制器
+    // 1011 1111 =0xbf
+    outb(PIC_S_DATA,0xbf);
     put_str(" pic_init done\n");
 }
 

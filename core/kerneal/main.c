@@ -12,6 +12,8 @@
 #include "syscall.h"
 #include "syscall-init.h"
 #include "stdio.h"
+#include "stdio-kernel.h"
+
 void test_string(void);
 void test_assert(void);
 void test_bitmap(void);
@@ -31,7 +33,7 @@ void main(void)
     put_str("I am kerneal\n");
     init_all();
 
-    process_execute(u_prog_a, "user_proga");
+   // process_execute(u_prog_a, "user_proga");
     // process_execute(u_prog_b, "user_progb");
   
     intr_enable();
@@ -39,8 +41,8 @@ void main(void)
     // console_put_int(getpid());
     // console_put_char('\n');
 
-  //  thread_start("k_thread_a,", 31, k_thread_a, "A");
-   //  thread_start("k_thread_b,", 31, k_thread_b, "B");
+ //thread_start("k_thread_a,", 31, k_thread_a, "A");
+   //thread_start("k_thread_b,", 31, k_thread_b, "B");
     while (1)
     {
         //console_put_str("Main\n");
@@ -61,64 +63,20 @@ void b_end(){
 }
 void k_thread_b(void *arg)
 {
-  
-    console_put_str(" thread_b start\n");
+
+   
     console_put_str(" thread_b end\n");
-    
-    void *arg1 = sys_malloc(30);
-    b_end();
-    sys_free(arg1);
-    b_end2();
-    while (1){
+    while (1)
         ;
-    }     
 }
 void k_thread_a(void *arg)
 {
-    char *para = arg;
-    void *addr1;
-    void *addr2;
-    void *addr3;
-    void *addr4;
-    void *addr5;
-    void *addr6;
-    void *addr7;
-    console_put_str(" thread_a start\n");
-    int max = 1000;
-    while (max-- > 0)
-    {
-        console_put_int(max);
-        int size = 128;
-        addr1 = sys_malloc(size);
-        size *= 2;
-        addr2 = sys_malloc(size);
-        size *= 2;
-        addr3 = sys_malloc(size);
-        sys_free(addr1);
-        addr4 = sys_malloc(size);
-        size *= 2;
-        size *= 2;
-        size *= 2;
-        size *= 2;
-        size *= 2;
-        size *= 2;
-        size *= 2;
-        addr5 = sys_malloc(size);
-        addr6 = sys_malloc(size);
-        sys_free(addr5);
-        size *= 2;
-        addr7 = sys_malloc(size);
-        sys_free(addr6);
-        sys_free(addr7);
-        sys_free(addr2);
-        sys_free(addr3);
-        sys_free(addr4);
-      
-    }
-    console_put_str(" thread_a end\n");
-    a_end();
-    while (1)
-        ;
+   printk("%s,%d,0x%x,%c","hello",100,0xff,'\n');
+
+   while(1){
+       /* code */
+   }
+   
 }
 
 void u_prog_a()

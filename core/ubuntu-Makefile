@@ -18,7 +18,7 @@ OBJS=$(BUILD_DIR)/main.o $(BUILD_DIR)/init.o $(BUILD_DIR)/interrupt.o \
 		$(BUILD_DIR)/string.o $(BUILD_DIR)/thread.o  $(BUILD_DIR)/list.o $(BUILD_DIR)/switch.o \
 		$(BUILD_DIR)/console.o $(BUILD_DIR)/sync.o $(BUILD_DIR)/keyboard.o $(BUILD_DIR)/ioqueue.o $(BUILD_DIR)/tss.o \
 		$(BUILD_DIR)/process.o $(BUILD_DIR)/syscall.o $(BUILD_DIR)/syscall-init.o $(BUILD_DIR)/stdio.o \
-		$(BUILD_DIR)/stdio-kernel.o
+		$(BUILD_DIR)/ide.o $(BUILD_DIR)/stdio-kernel.o
 OBJS_END=objs_end
 
 #头文件路径
@@ -38,6 +38,9 @@ OBJS_END=objs_end
 #include "tss.h" userprog/tss.h
 #include "string.h" lib/string.h
 #include "thread.h" thread/thread.h
+
+$(BUILD_DIR)/ide.o: device/ide.c $(device/ide.c_hs)
+	$(CC) $(CFLAGS) $< -o $@
 
 $(BUILD_DIR)/stdio-kernel.o: lib/kerneal/stdio-kernel.c $(lib/kerneal/stdio-kernel.c_hs) 
 	$(CC) $(CFLAGS) $< -o $@
@@ -126,11 +129,12 @@ mk_dir:
 
 EOF_EOF_EOF=eof_eof_eof
 /device/console.c_hs= /device/console.h /lib/kerneal/print.h /lib/stdint.h /thread/sync.h /thread/thread.h
+/device/ide.c_hs= /device/ide.h /thread/sync.h /lib/stdio.h /lib/kerneal/stdio-kernel.h /kerneal/interrupt.h /kerneal/memory.h /kerneal/debug.h /lib/string.h /lib/kerneal/io.h
 /device/ioqueue.c_hs= /device/ioqueue.h /kerneal/interrupt.h /kerneal/global.h /kerneal/debug.h
 /device/keyboard.c_hs= /device/keyboard.h /lib/kerneal/print.h /kerneal/interrupt.h /lib/kerneal/io.h /kerneal/global.h /device/ioqueue.h
 /device/timer.c_hs= /device/timer.h /lib/kerneal/io.h /lib/kerneal/print.h /thread/thread.h /kerneal/debug.h
 /kerneal/debug.c_hs= /kerneal/debug.h /lib/kerneal/print.h /kerneal/interrupt.h
-/kerneal/init.c_hs= /kerneal/init.h /lib/kerneal/print.h /kerneal/interrupt.h /kerneal/memory.h /device/timer.h /thread/thread.h /device/console.h /device/keyboard.h /userprog/tss.h /userprog/syscall-init.h
+/kerneal/init.c_hs= /kerneal/init.h /lib/kerneal/print.h /kerneal/interrupt.h /kerneal/memory.h /device/timer.h /thread/thread.h /device/console.h /device/keyboard.h /userprog/tss.h /userprog/syscall-init.h /device/ide.h
 /kerneal/interrupt.c_hs= /kerneal/interrupt.h /lib/stdint.h /kerneal/global.h /lib/kerneal/io.h /lib/kerneal/print.h /kerneal/debug.h
 /kerneal/main.c_hs= /lib/kerneal/print.h /kerneal/init.h /kerneal/debug.h /lib/string.h /lib/kerneal/bitmap.h /kerneal/memory.h /device/console.h /device/ioqueue.h /device/keyboard.h /kerneal/interrupt.h /userprog/process.h /lib/user/syscall.h /userprog/syscall-init.h /lib/stdio.h /lib/kerneal/stdio-kernel.h
 /kerneal/memory.c_hs= /kerneal/memory.h /lib/kerneal/bitmap.h /lib/stdint.h /kerneal/global.h /kerneal/debug.h /lib/kerneal/print.h /lib/string.h /thread/sync.h /kerneal/interrupt.h

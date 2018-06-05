@@ -3,7 +3,7 @@
 #include "print.h"
 #include "thread.h"
 #include "debug.h"
-#define IRQ0_FREQUENCY   10 //100hz
+#define IRQ0_FREQUENCY   100 //100hz
 #define INPUT_FREQUENCY 1193180//计数器频率为 1.19318mhz, 即1秒发生 1193180 次脉冲
 #define COUNTER0_VALUE INPUT_FREQUENCY/IRQ0_FREQUENCY// 1 秒计数器脉冲数/ 100 频数。
                                                     // 即发生一次时钟中断的 脉冲计数
@@ -12,6 +12,7 @@
 #define COUNTER_MODE 2  //方式2 比率发生器
 #define READ_WRITE_LATCH 3 //先读写低8位，再读写高8位
 #define PIT_CONTROL_PORT 0x43
+#define mil_seconds_per_intr (1000 / IRQ0_FREQUENCY)
 
 uint32_t ticks; //内核自中断以来总共的滴答数
 
@@ -100,8 +101,23 @@ static void intr_timer_handler(void)
         cur_thread->ticks--;
     }
 }
-
-
+//以tick为单位进行休眠
+static void ticks_to_sleep(uint32_t sleep_ticks)
+{
+    uint32_t start_tick = ticks;
+    //间隔tick不够，就让出cpu
+    while (ticks - start_tick < sleep_ticks)
+    {
+        thread_yield();
+    }
+}
+//以毫秒为单位sleep
+void mtime_sleep(uint32_t m_seconds)
+{
+    uint32_t sleep_ticks = DIV_ROUND_UP(m_seconds, mil_seconds_per_intr);
+    ASSERT(sleep_ticks > 0);
+    ticks_to_sleep(sleep_ticks);
+}
 void timer_init(){
     put_str("timer_init start\n");
     frequency_set(COUNTER0_PORT,\

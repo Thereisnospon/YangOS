@@ -7,7 +7,7 @@ DEL=rm
 NASM=nasm
 BOCHS=bochs
 BXIMAGE=bximage
-SIZE=10
+SIZE=60
 FILE=os.img 
 # docker api 项目的路径
 DOCKER_CLIENT_PATH=$(TOOLPATH)docker-client/
@@ -81,6 +81,7 @@ hd80:
 	$(MAKE) $(OUT_BUILD)hd80.img
 #制作系统镜像，并用 bochs 启动
 run:
+	rm -rf  build/kerneal.bin 
 	$(MAKE) $(OUT_F_OS_IMG) 
 	$(MAKE) $(OUT_BUILD)hd80.img
 	$(BOCHS) -f bochs.conf
@@ -266,5 +267,5 @@ OBJS=$(BUILD_DIR)/main.o $(BUILD_DIR)/init.o $(BUILD_DIR)/interrupt.o \
 		$(BUILD_DIR)/string.o $(BUILD_DIR)/thread.o  $(BUILD_DIR)/list.o $(BUILD_DIR)/switch.o \
 		$(BUILD_DIR)/console.o $(BUILD_DIR)/sync.o $(BUILD_DIR)/keyboard.o $(BUILD_DIR)/ioqueue.o $(BUILD_DIR)/tss.o \
 		$(BUILD_DIR)/process.o $(BUILD_DIR)/syscall.o $(BUILD_DIR)/syscall-init.o $(BUILD_DIR)/stdio.o \
-		$(BUILD_DIR)/stdio-kernel.o
+		$(BUILD_DIR)/ide.o $(BUILD_DIR)/stdio-kernel.o
 OBJS_END=objs_end
