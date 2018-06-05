@@ -4,11 +4,11 @@
 #include "sync.h"
 #include "bitmap.h"
 #include "list.h"
-
+#include "super_block.h"
 //分区
 struct partition
 {
-    uint32_t start_lba;        //起始扇区
+    uint32_t start_lba;         //起始扇区
     uint32_t sec_cnt;           //扇区数
     struct disk *my_disk;       //分区所属的硬盘
     struct list_elem part_tag;  //用于队列中的标记

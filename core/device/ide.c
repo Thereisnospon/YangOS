@@ -124,7 +124,7 @@ static void read_from_sector(struct disk *hd, void *buf, uint8_t sec_cnt)
     {
         size_in_byte = sec_cnt * 512;
     }
-    insw(reg_data(hd->my_channel), buf, size_in_byte / 2);// 字节/2 -> 字 数
+    insw(reg_data(hd->my_channel), buf, size_in_byte / 2); // 字节/2 -> 字 数
 }
 
 /* 将buf中sec_cnt扇区的数据写入硬盘 */
@@ -172,8 +172,8 @@ void ide_read(struct disk *hd, uint32_t lba, void *buf, uint32_t sec_cnt)
     /* 1 先选择操作的硬盘 */
     select_disk(hd);
 
-    uint32_t secs_op;       // 每次操作的扇区数
-    uint32_t secs_done = 0; // 已完成的扇区数
+    uint32_t secs_op;           // 每次操作的扇区数
+    uint32_t secs_done = 0;     // 已完成的扇区数
     while (secs_done < sec_cnt) //硬盘一次最多操作256扇区
     {
         if ((secs_done + 256) <= sec_cnt)
@@ -328,7 +328,7 @@ static void partition_scan(struct disk *hd, uint32_t ext_lba)
                 partition_scan(hd, p->start_lba + ext_lba_base);
             }
             else
-            {   // ext_lba_base为0表示是第一次读取引导块,也就是主引导记录所在的扇区
+            { // ext_lba_base为0表示是第一次读取引导块,也就是主引导记录所在的扇区
                 /* 记录下扩展分区的起始lba地址,后面所有的扩展分区地址都相对于此 */
                 ext_lba_base = p->start_lba;
                 partition_scan(hd, p->start_lba);
