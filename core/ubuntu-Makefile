@@ -3,7 +3,7 @@ ENTRY_POINT=0xc0001500
 NASM=nasm 
 GCC=gcc 
 LD=ld 
-INC_LIB= -I lib/ -I lib/kerneal -I lib/user -I kerneal/ -I device/ -I thread/ -I userprog/ -I fs/
+INC_LIB= -I lib/ -I lib/kerneal -I lib/user -I kerneal/ -I device/ -I thread/ -I userprog/ -I fs/ -I shell/
 ASFLAGS=-f elf 
 #-Wstrict-prototypes 函数声明必须要有参数类型
 #-fno-builtin 不要用内建函数
@@ -19,7 +19,7 @@ OBJS=$(BUILD_DIR)/main.o $(BUILD_DIR)/init.o $(BUILD_DIR)/interrupt.o \
 		$(BUILD_DIR)/console.o $(BUILD_DIR)/sync.o $(BUILD_DIR)/keyboard.o $(BUILD_DIR)/ioqueue.o $(BUILD_DIR)/tss.o \
 		$(BUILD_DIR)/process.o $(BUILD_DIR)/syscall.o $(BUILD_DIR)/syscall-init.o $(BUILD_DIR)/stdio.o \
 		$(BUILD_DIR)/ide.o $(BUILD_DIR)/stdio-kernel.o $(BUILD_DIR)/fs.o $(BUILD_DIR)/inode.o $(BUILD_DIR)/file.o $(BUILD_DIR)/dir.o \
-		$(BUILD_DIR)/fork.o 
+		$(BUILD_DIR)/fork.o   $(BUILD_DIR)/shell.o  $(BUILD_DIR)/buildin_cmd.o
 OBJS_END=objs_end
 
 #头文件路径
@@ -40,6 +40,11 @@ OBJS_END=objs_end
 #include "string.h" lib/string.h
 #include "thread.h" thread/thread.h
 
+ $(BUILD_DIR)/buildin_cmd.o : shell/buildin_cmd.c $(shell/buildin_cmd.c_hs)
+	$(CC) $(CFLAGS) $< -o $@
+
+$(BUILD_DIR)/shell.o :shell/shell.c $(shell/shell.c_hs)
+	$(CC) $(CFLAGS) $< -o $@
 
 $(BUILD_DIR)/fork.o : userprog/fork.c $(userprog/fork.c_hs)
 	$(CC) $(CFLAGS) $< -o $@
@@ -152,12 +157,12 @@ EOF_EOF_EOF=eof_eof_eof
 /device/timer.c_hs= /device/timer.h /lib/kerneal/io.h /lib/kerneal/print.h /thread/thread.h /kerneal/debug.h
 /fs/dir.c_hs= /fs/dir.h /lib/stdint.h /fs/inode.h /fs/file.h /fs/fs.h /lib/kerneal/stdio-kernel.h /kerneal/global.h /kerneal/debug.h /kerneal/memory.h /lib/string.h /kerneal/interrupt.h /fs/super_block.h
 /fs/file.c_hs= /fs/file.h /fs/fs.h /fs/super_block.h /fs/inode.h /lib/kerneal/stdio-kernel.h /kerneal/memory.h /kerneal/debug.h /kerneal/interrupt.h /lib/string.h /thread/thread.h /kerneal/global.h
-/fs/fs.c_hs= /fs/fs.h /fs/super_block.h /fs/inode.h /fs/dir.h /lib/stdint.h /lib/kerneal/stdio-kernel.h /lib/kerneal/list.h /lib/string.h /device/ide.h /kerneal/global.h /kerneal/debug.h /kerneal/memory.h /fs/file.h
+/fs/fs.c_hs= /fs/fs.h /fs/super_block.h /fs/inode.h /fs/dir.h /lib/stdint.h /lib/kerneal/stdio-kernel.h /lib/kerneal/list.h /lib/string.h /device/ide.h /kerneal/global.h /kerneal/debug.h /kerneal/memory.h /fs/file.h /device/console.h /device/keyboard.h /device/ioqueue.h
 /fs/inode.c_hs= /fs/inode.h /fs/fs.h /fs/file.h /kerneal/global.h /kerneal/debug.h /kerneal/memory.h /kerneal/interrupt.h /lib/kerneal/list.h /lib/kerneal/stdio-kernel.h /lib/string.h /fs/super_block.h
 /kerneal/debug.c_hs= /kerneal/debug.h /lib/kerneal/print.h /kerneal/interrupt.h
 /kerneal/init.c_hs= /kerneal/init.h /lib/kerneal/print.h /kerneal/interrupt.h /kerneal/memory.h /device/timer.h /thread/thread.h /device/console.h /device/keyboard.h /userprog/tss.h /userprog/syscall-init.h /device/ide.h /fs/fs.h
 /kerneal/interrupt.c_hs= /kerneal/interrupt.h /lib/stdint.h /kerneal/global.h /lib/kerneal/io.h /lib/kerneal/print.h /kerneal/debug.h
-/kerneal/main.c_hs= /lib/kerneal/print.h /kerneal/init.h /kerneal/debug.h /lib/string.h /lib/kerneal/bitmap.h /kerneal/memory.h /device/console.h /device/ioqueue.h /device/keyboard.h /kerneal/interrupt.h /userprog/process.h /lib/user/syscall.h /userprog/syscall-init.h /lib/stdio.h /lib/kerneal/stdio-kernel.h /fs/fs.h /fs/dir.h
+/kerneal/main.c_hs= /lib/kerneal/print.h /kerneal/init.h /kerneal/debug.h /lib/string.h /lib/kerneal/bitmap.h /kerneal/memory.h /device/console.h /device/ioqueue.h /device/keyboard.h /kerneal/interrupt.h /userprog/process.h /lib/user/syscall.h /userprog/syscall-init.h /lib/stdio.h /lib/kerneal/stdio-kernel.h /fs/fs.h /fs/dir.h /shell/shell.h
 /kerneal/memory.c_hs= /kerneal/memory.h /lib/kerneal/bitmap.h /lib/stdint.h /kerneal/global.h /kerneal/debug.h /lib/kerneal/print.h /lib/string.h /thread/sync.h /kerneal/interrupt.h
 /lib/kerneal/bitmap.c_hs= /lib/kerneal/bitmap.h /lib/stdint.h /lib/string.h /lib/kerneal/print.h /kerneal/interrupt.h /kerneal/debug.h
 /lib/kerneal/list.c_hs= /lib/kerneal/list.h /kerneal/interrupt.h /lib/stdint.h /lib/kerneal/print.h /kerneal/debug.h
@@ -165,8 +170,10 @@ EOF_EOF_EOF=eof_eof_eof
 /lib/stdio.c_hs= /lib/stdio.h /kerneal/interrupt.h /kerneal/global.h /lib/string.h /lib/user/syscall.h /lib/kerneal/print.h
 /lib/string.c_hs= /lib/string.h /kerneal/global.h /kerneal/debug.h
 /lib/user/syscall.c_hs= /lib/user/syscall.h /thread/thread.h
+/shell/buildin_cmd.c_hs= /shell/buildin_cmd.h /lib/user/syscall.h /lib/stdio.h /lib/string.h /fs/fs.h /kerneal/global.h /fs/dir.h /shell/shell.h /kerneal/debug.h
+/shell/shell.c_hs= /shell/shell.h /lib/stdint.h /fs/file.h /lib/user/syscall.h /lib/stdio.h /kerneal/global.h /kerneal/debug.h /lib/string.h /shell/buildin_cmd.h
 /thread/sync.c_hs= /thread/sync.h /lib/kerneal/list.h /kerneal/global.h /kerneal/debug.h /kerneal/interrupt.h
-/thread/thread.c_hs= /thread/thread.h /lib/stdint.h /lib/string.h /kerneal/global.h /kerneal/memory.h /kerneal/debug.h /lib/kerneal/list.h /lib/kerneal/print.h /kerneal/interrupt.h /userprog/process.h /thread/sync.h
+/thread/thread.c_hs= /thread/thread.h /lib/stdint.h /lib/string.h /kerneal/global.h /kerneal/debug.h /kerneal/interrupt.h /lib/kerneal/print.h /kerneal/memory.h /userprog/process.h /thread/sync.h /lib/stdio.h /fs/file.h /fs/fs.h
 /userprog/fork.c_hs= /userprog/fork.h /userprog/process.h /kerneal/memory.h /kerneal/interrupt.h /kerneal/debug.h /thread/thread.h /lib/string.h /fs/file.h
 /userprog/process.c_hs= /userprog/process.h /kerneal/global.h /kerneal/debug.h /kerneal/memory.h /thread/thread.h /lib/kerneal/list.h /userprog/tss.h /kerneal/interrupt.h /lib/string.h /device/console.h /kerneal/debug.h
 /userprog/syscall-init.c_hs= /userprog/syscall-init.h /lib/user/syscall.h /lib/stdint.h /lib/kerneal/print.h /thread/thread.h /device/console.h /lib/string.h /kerneal/memory.h /fs/fs.h /userprog/fork.h

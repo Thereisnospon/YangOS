@@ -89,7 +89,7 @@ static void intr_timer_handler(void)
 {
     struct task_struct *cur_thread = running_thread();
     ASSERT(cur_thread->stack_magic == THREAD_MAGIC_NUM);//检查栈是否溢出
-    cur_thread->elasped_ticks++;//记录此线程占用的cpu时间
+    cur_thread->elapsed_ticks++;                        //记录此线程占用的cpu时间
     ticks++;//内核第一次中断开始使用的滴答数
     if (cur_thread->ticks == 0)//时间片用完就开始调度新的进程上cpu
     {

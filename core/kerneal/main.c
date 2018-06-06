@@ -15,41 +15,41 @@
 #include "stdio-kernel.h"
 #include "fs.h"
 #include "dir.h"
-
-void test_string(void);
-void test_assert(void);
-void test_bitmap(void);
-void test_memory(void);
-void k_thread_a(void *);
-void k_thread_b(void *);
-void u_prog_a(void);
-void u_prog_b(void);
-int test_var_a = 0, test_var_b = 0;
-int proga_pid, progb_pid = 0;
-void a_end();
-void b_end();
-void read_file();
-void createdir();
-void opendir();
-void readdir();
-void deletedir();
-void chdir();
+#include "shell.h"
+static void test_string(void);
+static void test_assert(void);
+static void test_bitmap(void);
+static void test_memory(void);
+static void k_thread_a(void *);
+static void k_thread_b(void *);
+static void u_prog_a(void);
+static void u_prog_b(void);
+static int test_var_a = 0, test_var_b = 0;
+static int proga_pid, progb_pid = 0;
+static void a_end();
+static void b_end();
+static void read_file();
+static void createdir();
+static void opendir();
+static void readdir();
+static void deletedir();
+static void chdir();
 void init();
+
 void main(void)
 {
     clean_screen();
 
     put_str("I am kerneal\n");
     init_all();
-
-    // process_execute(u_prog_a, "user_proga");
+    cls_screen();
+    printf("[rabbit@localhost %s]$ ", "/");
+    //process_execute(u_prog_a, "user_proga");
     // process_execute(u_prog_b, "user_progb");
-
-    intr_enable();
     // console_put_str("main pid:0x");
     // console_put_int(getpid());
     // console_put_char('\n');
-   // stat();
+    // stat();
     //thread_start("k_thread_a,", 31, k_thread_a, "A");
     //thread_start("k_thread_b,", 31, k_thread_b, "B");
 
@@ -59,22 +59,29 @@ void main(void)
     }
 }
 
+
 /* init进程 */
 void init(void)
 {
     uint32_t ret_pid = fork();
     if (ret_pid)
     {
-        printf("i am father, my pid is %d, child pid is %d\n", getpid(), ret_pid);
+        printf("fork father :");
+       while(1){
+
+           /* code */
+       }
     }
     else
     {
-        printf("i am child, my pid is %d, ret pid is %d\n", getpid(), ret_pid);
+        
+        my_shell();
     }
     while (1)
         ;
 }
-void stat(){
+static void stat()
+{
     /********  测试代码  ********/
     struct stat obj_stat;
     sys_stat("/", &obj_stat);
@@ -87,7 +94,7 @@ void stat(){
            obj_stat.st_filetype == 2 ? "directory" : "regular");
     /********  测试代码  ********/
 }
-void chdir()
+static void chdir()
 {
     /********  测试代码  ********/
     char cwd_buf[32] = {0};
@@ -100,7 +107,7 @@ void chdir()
     printf("cwd:%s\n", cwd_buf);
     /********  测试代码  ********/
 }
-void deletedir()
+static void deletedir()
 {
     /********  测试代码  ********/
     printf("/dir1 content before delete /dir1/subdir1:\n");
@@ -158,7 +165,7 @@ void deletedir()
 
     /********  测试代码  ********/
 }
-void readdir()
+static void readdir()
 {
     /********  测试代码  ********/
     struct dir *p_dir = sys_opendir("/dir1/subdir1");
@@ -194,7 +201,7 @@ void readdir()
     }
     /********  测试代码  ********/
 }
-void createdir()
+static void createdir()
 {
     printf("/dir1/subdir1 create %s!\n", sys_mkdir("/dir1/subdir1") == 0 ? "done" : "fail");
     printf("/dir1 create %s!\n", sys_mkdir("/dir1") == 0 ? "done" : "fail");
@@ -211,7 +218,7 @@ void createdir()
         sys_close(fd);
     }
 }
-void opendir()
+static void opendir()
 {
     struct dir *p_dir = sys_opendir("/dir1/subdir1");
     if (p_dir)
@@ -231,7 +238,7 @@ void opendir()
         printf("/dir1/subdir1 open fail!\n");
     }
 }
-void read_file()
+static void read_file()
 {
     uint32_t fd = sys_open("/f1", O_RDWR);
     printf("open /file1, fd:%d\n", fd);
@@ -255,7 +262,7 @@ void read_file()
 
     sys_close(fd);
 }
-void a_end()
+static void a_end()
 {
 
     while (1)
@@ -263,20 +270,20 @@ void a_end()
         /* code */
     }
 }
-void b_end2()
+static void b_end2()
 {
 }
-void b_end()
+static void b_end()
 {
 }
-void k_thread_b(void *arg)
+static void k_thread_b(void *arg)
 {
 
     console_put_str(" thread_b end\n");
     while (1)
         ;
 }
-void k_thread_a(void *arg)
+static void k_thread_a(void *arg)
 {
     printk("%s,%d,0x%x,%c", "hello", 100, 0xff, '\n');
 
@@ -285,8 +292,7 @@ void k_thread_a(void *arg)
         /* code */
     }
 }
-
-void u_prog_a()
+static void malloc_me()
 {
     int size = 1;
     void *ptrs[30];
@@ -304,19 +310,25 @@ void u_prog_a()
         printf("free addr=0x%x\n", ptrs[cnt]);
         free(ptrs[cnt]);
     }
+}
+static void u_prog_a()
+{
 
+    // malloc_me();
+    clear();
+    putchar('A');
     while (1)
     {
     }
 }
-void u_prog_b()
+static void u_prog_b()
 {
     progb_pid = getpid();
     while (1)
     {
     }
 }
-void test_memory(void)
+static void test_memory(void)
 {
     void *addr = get_kernel_pages(3);
     put_str("get_kernel_page start vaddr is 0x");
@@ -324,7 +336,7 @@ void test_memory(void)
     put_char('\n');
 }
 
-void test_string(void)
+static void test_string(void)
 {
     put_str("test_string\n");
     char str1[100];
@@ -335,12 +347,12 @@ void test_string(void)
     put_int(len);
     put_str(go);
 }
-void test_assert(void)
+static void test_assert(void)
 {
     ASSERT(1 == 2);
 }
 
-void test_bitmap(void)
+static void test_bitmap(void)
 {
     uint8_t stack_mem[1024];
     struct bitmap btmp_s;

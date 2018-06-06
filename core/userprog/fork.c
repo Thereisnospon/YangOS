@@ -15,7 +15,7 @@ static int32_t copy_pcb_vaddrbitmap_stack0(struct task_struct *child_thread, str
     /* a 复制pcb所在的整个页,里面包含进程pcb信息及特级0极的栈,里面包含了返回地址, 然后再单独修改个别部分 */
     memcpy(child_thread, parent_thread, PG_SIZE);
     child_thread->pid = fork_pid();
-    child_thread->elasped_ticks = 0;
+    child_thread->elapsed_ticks = 0;
     child_thread->status = TASK_READY;
     child_thread->ticks = child_thread->priority; // 为新进程把时间片充满
     child_thread->parent_pid = parent_thread->pid;
