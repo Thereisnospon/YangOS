@@ -44,8 +44,9 @@ void main(void)
 
  //thread_start("k_thread_a,", 31, k_thread_a, "A");
    //thread_start("k_thread_b,", 31, k_thread_b, "B");
-   uint32_t fd=  sys_open("/f1",O_RDONLY);
+   int32_t fd=  sys_open("/f1",O_RDWR);
     printf("open fd:%d",fd);
+    sys_write(fd,"hello world\n",12);
     sys_close(fd);
     printf("close fd:%d",fd);
     while (1)
