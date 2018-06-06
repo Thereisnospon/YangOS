@@ -44,7 +44,10 @@ void main(void)
 
  //thread_start("k_thread_a,", 31, k_thread_a, "A");
    //thread_start("k_thread_b,", 31, k_thread_b, "B");
-   sys_open("/f1",O_CREAT);
+   uint32_t fd=  sys_open("/f1",O_RDONLY);
+    printf("open fd:%d",fd);
+    sys_close(fd);
+    printf("close fd:%d",fd);
     while (1)
     {
         //console_put_str("Main\n");
