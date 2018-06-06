@@ -14,6 +14,8 @@
 #include "stdio.h"
 #include "stdio-kernel.h"
 #include "fs.h"
+#include "dir.h"
+
 
 void test_string(void);
 void test_assert(void);
@@ -28,7 +30,8 @@ int proga_pid,progb_pid=0;
 void a_end();
 void b_end();
 void read_file();
-
+void createdir();
+void opendir();
 void main(void)
 {
     clean_screen();
@@ -43,9 +46,51 @@ void main(void)
     // console_put_str("main pid:0x");
     // console_put_int(getpid());
     // console_put_char('\n');
-   
+   readdir();
  //thread_start("k_thread_a,", 31, k_thread_a, "A");
    //thread_start("k_thread_b,", 31, k_thread_b, "B");
+   
+    while (1)
+    {
+        //console_put_str("Main\n");
+    }
+}
+void readdir(){
+    /********  测试代码  ********/
+    struct dir *p_dir = sys_opendir("/dir1/subdir1");
+    if (p_dir)
+    {
+        printf("/dir1/subdir1 open done!\ncontent:\n");
+        char *type = NULL;
+        struct dir_entry *dir_e = NULL;
+        while ((dir_e = sys_readdir(p_dir)))
+        {
+            if (dir_e->f_type == FT_REGULAR)
+            {
+                type = "regular";
+            }
+            else
+            {
+                type = "directory";
+            }
+            printf("      %s   %s\n", type, dir_e->filename);
+        }
+        if (sys_closedir(p_dir) == 0)
+        {
+            printf("/dir1/subdir1 close done!\n");
+        }
+        else
+        {
+            printf("/dir1/subdir1 close fail!\n");
+        }
+    }
+    else
+    {
+        printf("/dir1/subdir1 open fail!\n");
+    }
+    /********  测试代码  ********/
+}
+void createdir(){
     printf("/dir1/subdir1 create %s!\n", sys_mkdir("/dir1/subdir1") == 0 ? "done" : "fail");
     printf("/dir1 create %s!\n", sys_mkdir("/dir1") == 0 ? "done" : "fail");
     printf("now, /dir1/subdir1 create %s!\n", sys_mkdir("/dir1/subdir1") == 0 ? "done" : "fail");
@@ -60,9 +105,24 @@ void main(void)
         printf("/dir1/subdir1/file2 says:\n%s", buf);
         sys_close(fd);
     }
-    while (1)
+}
+void opendir(){
+    struct dir *p_dir = sys_opendir("/dir1/subdir1");
+    if (p_dir)
     {
-        //console_put_str("Main\n");
+        printf("/dir1/subdir1 open done!\n");
+        if (sys_closedir(p_dir) == 0)
+        {
+            printf("/dir1/subdir1 close done!\n");
+        }
+        else
+        {
+            printf("/dir1/subdir1 close fail!\n");
+        }
+    }
+    else
+    {
+        printf("/dir1/subdir1 open fail!\n");
     }
 }
 void read_file()
