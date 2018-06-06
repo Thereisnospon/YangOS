@@ -27,6 +27,8 @@ int test_var_a = 0, test_var_b = 0;
 int proga_pid,progb_pid=0;
 void a_end();
 void b_end();
+void read_file();
+
 void main(void)
 {
     clean_screen();
@@ -41,9 +43,17 @@ void main(void)
     // console_put_str("main pid:0x");
     // console_put_int(getpid());
     // console_put_char('\n');
-
+    printf("delete /f1 %s\n",sys_unlink("/f1") ==0?"done":"fail");
  //thread_start("k_thread_a,", 31, k_thread_a, "A");
    //thread_start("k_thread_b,", 31, k_thread_b, "B");
+   
+    while (1)
+    {
+        //console_put_str("Main\n");
+    }
+}
+void read_file()
+{
     uint32_t fd = sys_open("/f1", O_RDWR);
     printf("open /file1, fd:%d\n", fd);
     char buf[64] = {0};
@@ -65,10 +75,6 @@ void main(void)
     printf("4_ read %d bytes:\n%s", read_bytes, buf);
 
     sys_close(fd);
-    while (1)
-    {
-        //console_put_str("Main\n");
-    }
 }
 void a_end(){
     
