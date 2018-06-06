@@ -9,7 +9,7 @@ struct inode
     uint32_t i_no; // inode编号
 
     /* 当此inode是文件时,i_size是指文件大小,
-若此inode是目录,i_size是指该目录下所有目录项大小之和*/
+    若此inode是目录,i_size是指该目录下所有目录项大小之和*/
     uint32_t i_size;
 
     uint32_t i_open_cnts; // 记录此文件被打开的次数

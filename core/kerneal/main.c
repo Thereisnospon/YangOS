@@ -13,6 +13,7 @@
 #include "syscall-init.h"
 #include "stdio.h"
 #include "stdio-kernel.h"
+#include "fs.h"
 
 void test_string(void);
 void test_assert(void);
@@ -43,6 +44,7 @@ void main(void)
 
  //thread_start("k_thread_a,", 31, k_thread_a, "A");
    //thread_start("k_thread_b,", 31, k_thread_b, "B");
+   sys_open("/f1",O_CREAT);
     while (1)
     {
         //console_put_str("Main\n");

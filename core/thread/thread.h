@@ -11,6 +11,8 @@ typedef int16_t pid_t;
 
 extern struct list thread_ready_list;
 extern struct list thread_all_list;
+#define MAX_FILES_OPEN_PER_PROC 8
+
 //进程或者线程状态
 enum task_status
 {
@@ -88,6 +90,7 @@ struct task_struct
     uint8_t priority;              //线程优先级
     uint8_t ticks;                 // 每次在处理器上执行的时间滴答数
     uint32_t elasped_ticks;        //自从任务在cpu运行后，至今占用了多少滴答数
+    int32_t fd_table[MAX_FILES_OPEN_PER_PROC]; // 文件描述符数组
     struct list_elem general_tag;  //用于线程在一般的队列中的节点
     struct list_elem all_list_tag; //用于线程队列 thread_all_list 中的节点
     uint32_t *pgdir;               //进程自己的页表的虚拟地址
