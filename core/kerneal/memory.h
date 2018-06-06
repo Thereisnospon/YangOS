@@ -34,6 +34,7 @@ void *sys_malloc(uint32_t size);
 void mfree_page(enum pool_flags pf, void *_vaddr, uint32_t pg_cnt);
 void pfree(uint32_t pg_phy_addr);
 void sys_free(void *ptr);
+void *get_a_page_without_opvaddrbitmap(enum pool_flags pf, uint32_t vaddr);
 #define PG_P_1   1 //页表项或目录项存在属性位
 #define PG_P_0   0   //页表项或目录项存在属性位
 #define PG_RW_R 0   // R/W 属性位 读/执行

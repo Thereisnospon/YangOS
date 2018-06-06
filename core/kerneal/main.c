@@ -34,6 +34,7 @@ void opendir();
 void readdir();
 void deletedir();
 void chdir();
+void init();
 void main(void)
 {
     clean_screen();
@@ -48,7 +49,7 @@ void main(void)
     // console_put_str("main pid:0x");
     // console_put_int(getpid());
     // console_put_char('\n');
-    stat();
+   // stat();
     //thread_start("k_thread_a,", 31, k_thread_a, "A");
     //thread_start("k_thread_b,", 31, k_thread_b, "B");
 
@@ -56,6 +57,22 @@ void main(void)
     {
         //console_put_str("Main\n");
     }
+}
+
+/* init进程 */
+void init(void)
+{
+    uint32_t ret_pid = fork();
+    if (ret_pid)
+    {
+        printf("i am father, my pid is %d, child pid is %d\n", getpid(), ret_pid);
+    }
+    else
+    {
+        printf("i am child, my pid is %d, ret pid is %d\n", getpid(), ret_pid);
+    }
+    while (1)
+        ;
 }
 void stat(){
     /********  测试代码  ********/

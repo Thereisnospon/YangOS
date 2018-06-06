@@ -20,7 +20,7 @@ struct lock pid_lock;
 extern void switch_to(struct task_struct *cur, struct task_struct *next);
 static void idle(void *arg) ;
 struct task_struct *idle_thread; //idle线程
-
+extern void init(void);
 //分配pid
 static pid_t allocate_pid(void)
 {
@@ -29,6 +29,13 @@ static pid_t allocate_pid(void)
     next_pid++;
     lock_release(&pid_lock);
     return next_pid;
+}
+
+/* fork进程时为其分配pid,因为allocate_pid已经是静态的,别的文件无法调用.
+不想改变函数定义了,故定义fork_pid函数来封装一下。*/
+pid_t fork_pid(void)
+{
+    return allocate_pid();
 }
 //获取当前线程pcb指针
 struct task_struct *running_thread()
@@ -113,6 +120,7 @@ void init_thread(struct task_struct *pthread, char *name, int prio)
         fd_idx++;
     }
     pthread->cwd_inode_nr=0; //根目录为默认工作目录
+    pthread->parent_pid = -1;     // -1表示没有父进程
     pthread->stack_magic = THREAD_MAGIC_NUM; //自定义魔数
 }
 
@@ -213,6 +221,8 @@ void thread_init()
     list_init(&thread_ready_list);
     list_init(&thread_all_list);
     lock_init(&pid_lock);
+    /* 先创建第一个用户进程:init */
+    process_execute(init, "init"); // 放在第一个初始化,这是第一个进程,init进程的pid为1
     make_main_thread();
     idle_thread=thread_start("idle",10,idle,NULL);
     put_str("thread_init_done\n");
