@@ -32,11 +32,19 @@ struct path_search_record
     struct dir *parent_dir;           // 文件或目录所在的直接父目录
     enum file_types file_type;        // 找到的是普通文件还是目录,找不到将为未知类型(FT_UNKNOWN)
 };
-
+/* 文件读写位置偏移量 */
+enum whence
+{
+    SEEK_SET = 1,
+    SEEK_CUR,
+    SEEK_END
+};
 extern struct partition *cur_part;
 void filesys_init(void);
 int32_t path_depth_cnt(char *pathname);
 int32_t sys_open(const char *pathname, uint8_t flags);
 int32_t sys_close(int32_t fd);
 int32_t sys_write(int32_t fd, const void *buf, uint32_t count);
+int32_t sys_read(int32_t fd, void *buf, uint32_t count);
+int32_t sys_lseek(int32_t fd, int32_t offset, uint8_t whence);
 #endif
