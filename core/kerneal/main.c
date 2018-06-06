@@ -16,7 +16,6 @@
 #include "fs.h"
 #include "dir.h"
 
-
 void test_string(void);
 void test_assert(void);
 void test_bitmap(void);
@@ -26,12 +25,14 @@ void k_thread_b(void *);
 void u_prog_a(void);
 void u_prog_b(void);
 int test_var_a = 0, test_var_b = 0;
-int proga_pid,progb_pid=0;
+int proga_pid, progb_pid = 0;
 void a_end();
 void b_end();
 void read_file();
 void createdir();
 void opendir();
+void readdir();
+void deletedir();
 void main(void)
 {
     clean_screen();
@@ -39,23 +40,82 @@ void main(void)
     put_str("I am kerneal\n");
     init_all();
 
-   // process_execute(u_prog_a, "user_proga");
+    // process_execute(u_prog_a, "user_proga");
     // process_execute(u_prog_b, "user_progb");
-  
+
     intr_enable();
     // console_put_str("main pid:0x");
     // console_put_int(getpid());
     // console_put_char('\n');
-   readdir();
- //thread_start("k_thread_a,", 31, k_thread_a, "A");
-   //thread_start("k_thread_b,", 31, k_thread_b, "B");
-   
+    deletedir();
+    //thread_start("k_thread_a,", 31, k_thread_a, "A");
+    //thread_start("k_thread_b,", 31, k_thread_b, "B");
+
     while (1)
     {
         //console_put_str("Main\n");
     }
 }
-void readdir(){
+void deletedir()
+{
+    /********  测试代码  ********/
+    printf("/dir1 content before delete /dir1/subdir1:\n");
+    struct dir *dir = sys_opendir("/dir1/");
+    char *type = NULL;
+    struct dir_entry *dir_e = NULL;
+    while ((dir_e = sys_readdir(dir)))
+    {
+        if (dir_e->f_type == FT_REGULAR)
+        {
+            type = "regular";
+        }
+        else
+        {
+            type = "directory";
+        }
+        printf("      %s   %s\n", type, dir_e->filename);
+    }
+    printf("try to delete nonempty directory /dir1/subdir1\n");
+    if (sys_rmdir("/dir1/subdir1") == -1)
+    {
+        printf("sys_rmdir: /dir1/subdir1 delete fail!\n");
+    }
+
+    printf("try to delete /dir1/subdir1/file2\n");
+    if (sys_rmdir("/dir1/subdir1/file2") == -1)
+    {
+        printf("sys_rmdir: /dir1/subdir1/file2 delete fail!\n");
+    }
+    if (sys_unlink("/dir1/subdir1/file2") == 0)
+    {
+        printf("sys_unlink: /dir1/subdir1/file2 delete done\n");
+    }
+
+    printf("try to delete directory /dir1/subdir1 again\n");
+    if (sys_rmdir("/dir1/subdir1") == 0)
+    {
+        printf("/dir1/subdir1 delete done!\n");
+    }
+
+    printf("/dir1 content after delete /dir1/subdir1:\n");
+    sys_rewinddir(dir);
+    while ((dir_e = sys_readdir(dir)))
+    {
+        if (dir_e->f_type == FT_REGULAR)
+        {
+            type = "regular";
+        }
+        else
+        {
+            type = "directory";
+        }
+        printf("      %s   %s\n", type, dir_e->filename);
+    }
+
+    /********  测试代码  ********/
+}
+void readdir()
+{
     /********  测试代码  ********/
     struct dir *p_dir = sys_opendir("/dir1/subdir1");
     if (p_dir)
@@ -90,7 +150,8 @@ void readdir(){
     }
     /********  测试代码  ********/
 }
-void createdir(){
+void createdir()
+{
     printf("/dir1/subdir1 create %s!\n", sys_mkdir("/dir1/subdir1") == 0 ? "done" : "fail");
     printf("/dir1 create %s!\n", sys_mkdir("/dir1") == 0 ? "done" : "fail");
     printf("now, /dir1/subdir1 create %s!\n", sys_mkdir("/dir1/subdir1") == 0 ? "done" : "fail");
@@ -106,7 +167,8 @@ void createdir(){
         sys_close(fd);
     }
 }
-void opendir(){
+void opendir()
+{
     struct dir *p_dir = sys_opendir("/dir1/subdir1");
     if (p_dir)
     {
@@ -149,61 +211,59 @@ void read_file()
 
     sys_close(fd);
 }
-void a_end(){
-    
-    while(1){
+void a_end()
+{
+
+    while (1)
+    {
         /* code */
     }
-    
 }
-void b_end2(){
-
+void b_end2()
+{
 }
-void b_end(){
-    
+void b_end()
+{
 }
 void k_thread_b(void *arg)
 {
 
-   
     console_put_str(" thread_b end\n");
     while (1)
         ;
 }
 void k_thread_a(void *arg)
 {
-   printk("%s,%d,0x%x,%c","hello",100,0xff,'\n');
+    printk("%s,%d,0x%x,%c", "hello", 100, 0xff, '\n');
 
-   while(1){
-       /* code */
-   }
-   
+    while (1)
+    {
+        /* code */
+    }
 }
 
 void u_prog_a()
 {
-    int size=1;
-    void*ptrs[30];
-    int cnt=0;
-    while(size<2049){
-        void *p1=malloc(size);
-        ptrs[cnt++]=p1;
-        printf("size=%d addr=0x%x\n",size,p1);
-        size*=2;
+    int size = 1;
+    void *ptrs[30];
+    int cnt = 0;
+    while (size < 2049)
+    {
+        void *p1 = malloc(size);
+        ptrs[cnt++] = p1;
+        printf("size=%d addr=0x%x\n", size, p1);
+        size *= 2;
     }
 
-    while(cnt--){
+    while (cnt--)
+    {
         printf("free addr=0x%x\n", ptrs[cnt]);
         free(ptrs[cnt]);
-     
     }
-    
-    
 
     while (1)
     {
-
-   }
+    }
 }
 void u_prog_b()
 {
