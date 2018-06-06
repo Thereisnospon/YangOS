@@ -33,6 +33,7 @@ void createdir();
 void opendir();
 void readdir();
 void deletedir();
+void chdir();
 void main(void)
 {
     clean_screen();
@@ -47,7 +48,7 @@ void main(void)
     // console_put_str("main pid:0x");
     // console_put_int(getpid());
     // console_put_char('\n');
-    deletedir();
+    stat();
     //thread_start("k_thread_a,", 31, k_thread_a, "A");
     //thread_start("k_thread_b,", 31, k_thread_b, "B");
 
@@ -55,6 +56,32 @@ void main(void)
     {
         //console_put_str("Main\n");
     }
+}
+void stat(){
+    /********  测试代码  ********/
+    struct stat obj_stat;
+    sys_stat("/", &obj_stat);
+    printf("/`s info\n   i_no:%d\n   size:%d\n   filetype:%s\n",
+           obj_stat.st_ino, obj_stat.st_size,
+           obj_stat.st_filetype == 2 ? "directory" : "regular");
+    sys_stat("/dir1", &obj_stat);
+    printf("/dir1`s info\n   i_no:%d\n   size:%d\n   filetype:%s\n",
+           obj_stat.st_ino, obj_stat.st_size,
+           obj_stat.st_filetype == 2 ? "directory" : "regular");
+    /********  测试代码  ********/
+}
+void chdir()
+{
+    /********  测试代码  ********/
+    char cwd_buf[32] = {0};
+    sys_getcwd(cwd_buf, 32);
+    printf("cwd:%s\n", cwd_buf);
+    //printf("create /dir1\n", sys_mkdir("/dir1") == 0 ? "done" : "fail");
+    sys_chdir("/dir1");
+    printf("change cwd now\n");
+    sys_getcwd(cwd_buf, 32);
+    printf("cwd:%s\n", cwd_buf);
+    /********  测试代码  ********/
 }
 void deletedir()
 {

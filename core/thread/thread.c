@@ -112,7 +112,7 @@ void init_thread(struct task_struct *pthread, char *name, int prio)
         pthread->fd_table[fd_idx] = -1;
         fd_idx++;
     }
-
+    pthread->cwd_inode_nr=0; //根目录为默认工作目录
     pthread->stack_magic = THREAD_MAGIC_NUM; //自定义魔数
 }
 
