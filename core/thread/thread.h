@@ -7,7 +7,7 @@
 typedef void thread_func(void *);
 typedef int16_t pid_t;
 #define THREAD_MAGIC_NUM 0x19870916
-
+#define TASK_NAME_LEN 16
 
 extern struct list thread_ready_list;
 extern struct list thread_all_list;

@@ -1002,6 +1002,8 @@ char *sys_getcwd(char *buf, uint32_t size)
     {
         buf[0] = '/';
         buf[1] = 0;
+        //一个引起巨bug的坑
+        sys_free(io_buf);
         return buf;
     }
 

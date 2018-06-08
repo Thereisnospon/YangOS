@@ -76,13 +76,17 @@ build/kerneal.bin:$(OBJS)
 $(OUT_BUILD)hd80.img:bochs.conf 
 	$(DEL) -rf $(OUT_BUILD)hd80.img
 	cp $(META_FILES)/hd80.img $(OUT_BUILD)hd80.img
-	
+
+$(OUT_BUILD)prog_no_arg:
+	docker exec -it osgo make -f ubuntu-Makefile  prog_no_arg
+
 hd80:
 	$(MAKE) $(OUT_BUILD)hd80.img
 #制作系统镜像，并用 bochs 启动
 run:
 	rm -rf  build/kerneal.bin 
 	$(MAKE) $(OUT_F_OS_IMG) 
+	$(MAKE) $(OUT_BUILD)prog_no_arg
 	$(MAKE) $(OUT_BUILD)hd80.img
 	$(BOCHS) -f bochs.conf
 
@@ -117,6 +121,8 @@ unzip_hd80:
 #使用bximage 创建一个空的hd80.img 文件。需要安装下面的分区步骤一步一步分区
 touch_hd80:
 	$(BXIMAGE) -hd -mode='flat' -size=80 -q $(OUT_BUILD)hd80.img
+
+
 
 #******************************************************************************************************
 #******************************************************************************************************
