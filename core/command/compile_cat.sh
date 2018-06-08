@@ -12,7 +12,7 @@ if [[ ! -d "../lib" || ! -d "../build" ]];then
    exit
 fi
 
-BIN="prog_arg"
+BIN="cat"
 CFLAGS="-Wall -c -fno-builtin -W -Wstrict-prototypes \
       -Wmissing-prototypes -Wsystem-headers -fno-stack-protector"
 
@@ -29,9 +29,12 @@ ar rcs simple_crt.a $OBJS start.o
 gcc $CFLAGS $LIBS -o $BIN".o" $BIN".c"
 ld $BIN".o" simple_crt.a -o $BIN.bin
 SEC_CNT=$(ls -l $BIN.bin|awk '{printf("%d", ($5+511)/512)}')
+
 if [[ -f $BIN".bin" ]];then
    dd if=$BIN".bin" of=$DD_OUT bs=512 \
    count=$SEC_CNT seek=300 conv=notrunc
+   dd if=$BIN".c" of=$DD_OUT bs=512 \
+   count=1 seek=350 conv=notrunc
 fi
 
 ##########   以上核心就是下面这五条命令   ##########

@@ -7,7 +7,7 @@
 #include "debug.h"
 #include "string.h"
 #include "buildin_cmd.h"
-
+#include "assert.h"
 #define MAX_ARG_NR 16 // 加上命令名外,最多支持15个参数
 
 /* 存储输入的命令 */
@@ -194,10 +194,13 @@ void my_shell(void)
          
             if (pid)
             { // 父进程
-                /* 下面这个while必须要加上,否则父进程一般情况下会比子进程先执行,
-	            因此会进行下一轮循环将findl_path清空,这样子进程将无法从final_path中获得参数*/
-                while (1)
-                    ;
+                int32_t status;
+                int32_t child_pid = wait(&status); // 此时子进程若没有执行exit,my_shell会被阻塞,不再响应键入的命令
+                if (child_pid == -1)
+                { // 按理说程序正确的话不会执行到这句,fork出的进程便是shell子进程
+                    panic("my_shell: no child\n");
+                }
+                printf("child_pid %d, it's status: %d\n", child_pid, status);
             }
             else
             
@@ -213,13 +216,12 @@ void my_shell(void)
                 if (stat(argv[0], &file_stat) == -1)
                 {
                     printf("my_shell: cannot access %s: No such file or directory\n", argv[0]);
+                    exit(-1);
                 }
                 else
                 {
                     execv(argv[0], argv);
                 }
-                while (1)
-                    ;
             }
         }
         int32_t arg_idx = 0;

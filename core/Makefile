@@ -82,7 +82,8 @@ prog_no_arg:
 
 prog_arg:
 	docker exec -it osgo make -f ubuntu-Makefile  prog_arg
-
+cat:
+	docker exec -it osgo make -f ubuntu-Makefile  cat
 hd80:
 	$(MAKE) $(OUT_BUILD)hd80.img
 #制作系统镜像，并用 bochs 启动
@@ -100,6 +101,14 @@ run3:
 	cp $(META_FILES)/hd80_prog.img $(OUT_BUILD)hd80.img
 	$(MAKE) $(OUT_F_OS_IMG) 
 	$(MAKE) prog_arg
+	$(BOCHS) -f bochs.conf
+
+run4:	
+	rm -rf  build/kerneal.bin 
+	$(DEL) -rf $(OUT_BUILD)hd80.img
+	cp $(META_FILES)/hd80_prog.img $(OUT_BUILD)hd80.img
+	$(MAKE) $(OUT_F_OS_IMG) 
+	$(MAKE) cat
 	$(BOCHS) -f bochs.conf
 
 clean:

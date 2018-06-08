@@ -173,6 +173,9 @@ done:
 /*
 
 关于gcc堆栈保护的异常
+参考 
+https://hardenedlinux.github.io/2016/11/27/canary.html
+https://www.ibm.com/developerworks/cn/linux/l-cn-gccstack/index.html
 
 char abs_path[512]; 在栈中分配的数组。
 gcc 会针对栈中的数组做 堆栈保护。防止缓冲区溢出攻击。
