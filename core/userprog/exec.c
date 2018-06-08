@@ -172,6 +172,66 @@ done:
 
 /*
 
+关于gcc堆栈保护的异常
+
+char abs_path[512]; 在栈中分配的数组。
+gcc 会针对栈中的数组做 堆栈保护。防止缓冲区溢出攻击。
+会在程序前 mov  eax [gs:0x14] 获取一个随机数。 但是gs用来做显示段了。然后就gg
+
+测试代码:
+int main(int argc,char**argv)
+{
+    char abs_path[512]; //又是一个bug点
+    int arg_idx=0;
+    abs_path[0] = 'x';
+
+    while(1){
+    }
+    return 0;
+}
+
+ -fno-stack-protector 编译选项 禁用堆栈保护
+
+ 08048080 <main>:
+ 8048080:	55                   	push   %ebp
+ 8048081:	89 e5                	mov    %esp,%ebp
+ 8048083:	81 ec 10 02 00 00    	sub    $0x210,%esp
+ 8048089:	c7 45 fc 00 00 00 00 	movl   $0x0,-0x4(%ebp)
+ 8048090:	c6 85 fc fd ff ff 78 	movb   $0x78,-0x204(%ebp)
+ 8048097:	eb fe                	jmp    8048097 <main+0x17>
+ 8048099:	66 90                	xchg   %ax,%ax
+ 804809b:	66 90                	xchg   %ax,%ax
+ 804809d:	66 90                	xchg   %ax,%ax
+ 804809f:	90                   	nop
+
+
+没有禁用保护
+
+08048080 <main>:
+ 8048080:	8d 4c 24 04          	lea    0x4(%esp),%ecx
+ 8048084:	83 e4 f0             	and    $0xfffffff0,%esp
+ 8048087:	ff 71 fc             	pushl  -0x4(%ecx)
+ 804808a:	55                   	push   %ebp
+ 804808b:	89 e5                	mov    %esp,%ebp
+ 804808d:	51                   	push   %ecx
+ 804808e:	81 ec 24 02 00 00    	sub    $0x224,%esp
+ 8048094:	89 c8                	mov    %ecx,%eax
+ 8048096:	8b 40 04             	mov    0x4(%eax),%eax
+ 8048099:	89 85 e4 fd ff ff    	mov    %eax,-0x21c(%ebp)
+ 804809f:	65 a1 14 00 00 00    	mov    %gs:0x14,%eax
+ 80480a5:	89 45 f4             	mov    %eax,-0xc(%ebp)
+ 80480a8:	31 c0                	xor    %eax,%eax
+ 80480aa:	c7 85 f0 fd ff ff 00 	movl   $0x0,-0x210(%ebp)
+ 80480b1:	00 00 00 
+ 80480b4:	c6 85 f4 fd ff ff 78 	movb   $0x78,-0x20c(%ebp)
+ 80480bb:	eb fe                	jmp    80480bb <main+0x3b>
+ 80480bd:	66 90                	xchg   %ax,%ax
+ 80480bf:	90                   	nop
+
+*/
+
+/*
+
 
 关于堆内存起始设置在 0x8048000 位置的问题。
 

@@ -43,21 +43,25 @@ void main(void)
     put_str("I am kerneal\n");
     init_all();
     /*************    写入应用程序    *************/
-    //   uint32_t file_size = 6076;
-    //   uint32_t sec_cnt = DIV_ROUND_UP(file_size, 512);
-    //   struct disk* sda = &channels[0].devices[0];
-    //   void* prog_buf = sys_malloc(file_size);
-    //   ide_read(sda, 300, prog_buf, sec_cnt);
-    //   int32_t fd = sys_open("/prog_no_arg", O_CREAT|O_RDWR);
-    //   if (fd != -1) {
-    //      if(sys_write(fd, prog_buf, file_size) == -1) {
-    // 	 printk("file write error!\n");
-    // 	 while(1);
-    //      }
-    //   }
+  //  uint32_t file_size = 6076;
+    uint32_t file_size = 6712;
+    uint32_t sec_cnt = DIV_ROUND_UP(file_size, 512);
+    struct disk *sda = &channels[0].devices[0];
+    void *prog_buf = sys_malloc(file_size);
+    ide_read(sda, 300, prog_buf, sec_cnt);
+    int32_t fd = sys_open("/prog_arg", O_CREAT | O_RDWR);
+    if (fd != -1)
+    {
+        if (sys_write(fd, prog_buf, file_size) == -1)
+        {
+            printk("file write error!\n");
+            while (1)
+                ;
+        }
+      }
     /*************    写入应用程序结束   *************/
-  //cls_screen();
-  printf("[rabbit@localhost %s]$ ", "/");
+   // cls_screen();
+    printf("[rabbit@localhost %s]$ ", "/");
     //process_execute(u_prog_a, "user_proga");
     // process_execute(u_prog_b, "user_progb");
     // console_put_str("main pid:0x");
@@ -73,7 +77,6 @@ void main(void)
     }
 }
 
-
 /* init进程 */
 void init(void)
 {
@@ -81,15 +84,16 @@ void init(void)
     uint32_t ret_pid = fork();
     if (ret_pid)
     {
-      
-       while(1){
 
-           /* code */
-       }
+        while (1)
+        {
+
+            /* code */
+        }
     }
     else
     {
-        
+
         my_shell();
     }
     while (1)

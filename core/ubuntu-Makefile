@@ -151,6 +151,8 @@ go:
 prog_no_arg:
 	cd command ;./compile.sh 
 
+prog_arg:
+	cd command ;./compile_arg.sh 
 
 mk_dir:
 	if([[! -d $(BUILD_DIR)]]);then mkdir $(BUILD_DIR) ;fi 
