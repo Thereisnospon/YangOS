@@ -69,7 +69,7 @@ void free(void *ptr)
 }
 
 /* 派生子进程,返回子进程pid */
-pid_t fork(void)
+int16_t fork(void)
 {
     return _syscall0(SYS_FORK);
 }
@@ -187,7 +187,12 @@ void exit(int32_t status)
 }
 
 /* 等待子进程,子进程状态存储到status */
-pid_t wait(int32_t *status)
+int16_t wait(int32_t *status)
 {
     return _syscall1(SYS_WAIT, status);
+}
+/* 生成管道,pipefd[0]负责读入管道,pipefd[1]负责写入管道 */
+int32_t pipe(int32_t pipefd[2])
+{
+    return _syscall1(SYS_PIPE, pipefd);
 }

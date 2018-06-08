@@ -20,18 +20,23 @@ void init();
 void try_write(char *name, int sector, uint32_t file_size);
 void run4();
 void run3();
+void run5();
 void main(void)
 {
     clean_screen();
     put_str("I am kerneal\n");
     init_all();
     /*************    写入应用程序    *************/
-    run4();
+    // run4();
+    run5();
     /*************    写入应用程序结束   *************/
     // cls_screen();
     printf("[rabbit@localhost %s]$ ", "/");
     thread_exit(running_thread(), true);
     return 0;
+}
+void run5(){
+    try_write("/prog_pipe",300,6800);
 }
 void run3()
 {
