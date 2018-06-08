@@ -921,7 +921,7 @@ void filesys_init() {
 
    /* 将当前分区的根目录打开 */
    open_root_dir(cur_part);
-
+   
    /* 初始化文件表 */
    uint32_t fd_idx = 0;
    while (fd_idx < MAX_FILE_OPEN) {

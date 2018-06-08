@@ -36,8 +36,21 @@ struct mem_block_desc {
    uint32_t blocks_per_arena;	 // 本arena中可容纳此mem_block的数量.
    struct list free_list;	 // 目前可用的mem_block链表
 };
-
+/* 内存仓库arena元信息 */
+struct arena
+{
+    struct mem_block_desc *desc; // 此arena关联的mem_block_desc
+                                 /* large为ture时,cnt表示的是页框数。
+ * 否则cnt表示空闲mem_block数量 */
+    uint32_t cnt;
+    bool large;
+};
+void ainfo(void *addr);
 #define DESC_CNT 7
+struct mem_block *arena2block(struct arena *a, uint32_t idx);
+/* 返回内存块b所在的arena地址 */
+struct arena *block2arena(struct mem_block *b);
+
 
 extern struct pool kernel_pool, user_pool;
 void mem_init(void);

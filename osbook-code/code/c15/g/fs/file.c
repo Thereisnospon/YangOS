@@ -410,6 +410,7 @@ int32_t file_write(struct file* file, const void* buf, uint32_t count) {
    inode_sync(cur_part, file->fd_inode, io_buf);
    sys_free(all_blocks);
    sys_free(io_buf);
+   printk("write %d\n", bytes_written) ;
    return bytes_written;
 }
 
@@ -428,6 +429,8 @@ int32_t file_read(struct file* file, void* buf, uint32_t count) {
    }
 
    uint8_t* io_buf = sys_malloc(BLOCK_SIZE);
+   printk("all buf:0x%x", buf);
+   ainfo(io_buf);
    if (io_buf == NULL) {
       printk("file_read: sys_malloc for io_buf failed\n");
    }
@@ -504,6 +507,8 @@ int32_t file_read(struct file* file, void* buf, uint32_t count) {
       size_left -= chunk_size;
    }
    sys_free(all_blocks);
+   printk("free buf:0x%x", buf);
+   ainfo(io_buf);
    sys_free(io_buf);
    return bytes_read;
 }

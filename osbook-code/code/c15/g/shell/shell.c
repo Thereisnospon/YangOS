@@ -154,6 +154,7 @@ void my_shell(void) {
 	 buildin_rm(argc, argv);
       } else {      // 如果是外部命令,需要从磁盘上加载
 	 int32_t pid = fork();
+	
 	 if (pid) {	   // 父进程
 	    /* 下面这个while必须要加上,否则父进程一般情况下会比子进程先执行,
 	    因此会进行下一轮循环将findl_path清空,这样子进程将无法从final_path中获得参数*/

@@ -17,7 +17,7 @@
 
 #define PDE_IDX(addr) ((addr & 0xffc00000) >> 22)
 #define PTE_IDX(addr) ((addr & 0x003ff000) >> 12)
-
+static int msum=0;
 /* 0xc0000000是内核从虚拟地址3G起. 0x100000意指跨过低端1M内存,使虚拟地址在逻辑上连续 */
 #define K_HEAP_START 0xc0100000
 
@@ -29,14 +29,7 @@ struct pool {
    struct lock lock;		 // 申请内存时互斥
 };
 
-/* 内存仓库arena元信息 */
-struct arena {
-   struct mem_block_desc* desc;	 // 此arena关联的mem_block_desc
-/* large为ture时,cnt表示的是页框数。
- * 否则cnt表示空闲mem_block数量 */
-   uint32_t cnt;
-   bool large;		   
-};
+
 
 struct mem_block_desc k_block_descs[DESC_CNT];	// 内核内存块描述符数组
 struct pool kernel_pool, user_pool;      // 生成内核内存池和用户内存池
@@ -252,12 +245,12 @@ uint32_t addr_v2p(uint32_t vaddr) {
 }
 
 /* 返回arena中第idx个内存块的地址 */
-static struct mem_block* arena2block(struct arena* a, uint32_t idx) {
+ struct mem_block* arena2block(struct arena* a, uint32_t idx) {
   return (struct mem_block*)((uint32_t)a + sizeof(struct arena) + idx * a->desc->block_size);
 }
 
 /* 返回内存块b所在的arena地址 */
-static struct arena* block2arena(struct mem_block* b) {
+ struct arena* block2arena(struct mem_block* b) {
    return (struct arena*)((uint32_t)b & 0xfffff000);
 }
 
@@ -289,7 +282,9 @@ void* sys_malloc(uint32_t size) {
    struct arena* a;
    struct mem_block* b;	
    lock_acquire(&mem_pool->lock);
-/* 超过最大内存块1024, 就分配页框 */
+   msum++;
+   printk("alm %d\n", msum);
+   /* 超过最大内存块1024, 就分配页框 */
    if (size > 1024) {
       uint32_t page_cnt = DIV_ROUND_UP(size + sizeof(struct arena), PG_SIZE);    // 向上取整需要的页框数
 
@@ -317,12 +312,14 @@ void* sys_malloc(uint32_t size) {
 	    break;
 	 }
       }
-   	       
+   	bool em=false;
    /* 若mem_block_desc的free_list中已经没有可用的mem_block,
     * 就创建新的arena提供mem_block */
       if (list_empty(&descs[desc_idx].free_list)) {
 	 a = malloc_page(PF, 1);       // 分配1页框做为arena
-	 if (a == NULL) {
+       printk("create size%d bsize %d\n", size, descs[desc_idx].block_size);
+       em = true;
+       if (a == NULL) {
 	    lock_release(&mem_pool->lock);
 	    return NULL;
 	 }
@@ -333,7 +330,7 @@ void* sys_malloc(uint32_t size) {
 	 a->desc = &descs[desc_idx];
 	 a->large = false;
 	 a->cnt = descs[desc_idx].blocks_per_arena;
-	 uint32_t block_idx;
+       uint32_t block_idx;
 
 	 enum intr_status old_status = intr_disable();
 
@@ -344,12 +341,22 @@ void* sys_malloc(uint32_t size) {
 	    list_append(&a->desc->free_list, &b->free_elem);	
 	 }
 	 intr_set_status(old_status);
-      }    
+      } else{
+          printk("have\n");
+      }
    /* 开始分配内存块 */
       b = elem2entry(struct mem_block, free_elem, list_pop(&(descs[desc_idx].free_list)));
       memset(b, 0, descs[desc_idx].block_size);
 
       a = block2arena(b);  // 获取内存块b所在的arena
+      if (em)
+      {
+            printk("create desc 0x%x cnt%d size%d\n", a, a->cnt, size);
+      }
+      else
+      {
+            printk("have desc 0x%x cnt%d size%d\n", a, a->cnt, size);
+      }
       a->cnt--;		   // 将此arena中的空闲内存块数减1
       lock_release(&mem_pool->lock);
       return (void*)b;
@@ -466,7 +473,9 @@ void sys_free(void* ptr) {
 	 mem_pool = &user_pool;
       }
 
-      lock_acquire(&mem_pool->lock);   
+      lock_acquire(&mem_pool->lock);
+      msum--;
+      printk("almf %d\n", msum);
       struct mem_block* b = ptr;
       struct arena* a = block2arena(b);	     // 把mem_block转换成arena,获取元信息
       ASSERT(a->large == 0 || a->large == 1);
@@ -568,7 +577,7 @@ void block_desc_init(struct mem_block_desc* desc_array) {
 
       /* 初始化arena中的内存块数量 */
       desc_array[desc_idx].blocks_per_arena = (PG_SIZE - sizeof(struct arena)) / block_size;	  
-
+     
       list_init(&desc_array[desc_idx].free_list);
 
       block_size *= 2;         // 更新为下一个规格内存块
@@ -583,4 +592,14 @@ void mem_init() {
 /* 初始化mem_block_desc数组descs,为malloc做准备 */
    block_desc_init(k_block_descs);
    put_str("mem_init done\n");
+}
+void ainfo(void *addr){
+      struct mem_block *b = addr;
+      //mem_block 获取 arena 元信息
+      struct arena *a = block2arena(b);
+      if(a->desc!=NULL){
+            printk("b:0x%x a:0x%x cnt:0x%x size:0x%x \n", b, a, a->cnt, a->desc->block_size);
+      }else{
+            printk("b:0x%x a:0x%x cnt:0x%x descnull\n", b, a, a->cnt);
+      }
 }

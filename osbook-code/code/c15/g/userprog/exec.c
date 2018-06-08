@@ -93,18 +93,19 @@ static int32_t load(const char* pathname) {
    struct Elf32_Ehdr elf_header;
    struct Elf32_Phdr prog_header;
    memset(&elf_header, 0, sizeof(struct Elf32_Ehdr));
-
    int32_t fd = sys_open(pathname, O_RDONLY);
    if (fd == -1) {
       return -1;
    }
-
    if (sys_read(fd, &elf_header, sizeof(struct Elf32_Ehdr)) != sizeof(struct Elf32_Ehdr)) {
       ret = -1;
       goto done;
    }
 
    /* 校验elf头 */
+   printk("type %d machine %d version %d phum %d pthentize %d ident %s\n",
+          elf_header.e_type, elf_header.e_machine, elf_header.e_version, elf_header.e_phnum,
+          elf_header.e_phentsize, elf_header.e_ident);
    if (memcmp(elf_header.e_ident, "\177ELF\1\1\1", 7) \
       || elf_header.e_type != 2 \
       || elf_header.e_machine != 3 \
@@ -138,6 +139,7 @@ static int32_t load(const char* pathname) {
 	    ret = -1;
 	    goto done;
 	 }
+    
       }
 
       /* 更新下一个程序头的偏移 */
@@ -149,23 +151,107 @@ done:
    sys_close(fd);
    return ret;
 }
+/*
 
+
+关于堆内存起始设置在 0x8048000 位置的问题。
+
+由于加载程序起始位置也是 0x8048000, 而之前程序的分配的内存信息在 0x8048000附近。
+加载的程序把之前的 内存分配元信息覆盖，会产生问题。
+所以，后面必须要改掉堆内存分配的问题。
+
+bug 复现
+
+getCwd 忘记释放一个 512 字节的内存块
+
+概念：
+内存仓库: arena 
+arena 占据一个自然页框 
+arena 页的开始部分是本仓库分配的元信息。元信息后面跟着 若干个 同样大小的 内存块。（16，32，64，512，1024
+每次分配内存块时，先查找是否有与它相近大小的 空闲内存块，如果有，就分配出去（修改元信息），没有就新建一个内存仓库
+每次释放内存块时，修改内存仓库的元信息，如果当前内存仓库的所有内存块都被释放，就释放整个内存仓库，并释放整个页框，解除页和物理地址的映射。
+
+先看正常情况 :
+
+step1: 申请一个 512 ，1024 单位的内存块
+
+ 0x8048000 ->  arena1[ cnt 7 / size 512  （之前没有512单位的内存块，在 0x8048000 新建一个内存仓库 （有7个空闲
+ 0x8049000 ->  arena2[ cnt 3 / size 1024  (没有1024大小的内存块，新建一个内存仓库
+    arena1 -- 
+    arena2 -- 
+    arena1 += 0x8048000 释放 (刚创建的 arena1 所有内存块释放，整个内存仓库释放，页也释放
+    arena2 ++ 0x8049000 释放 (arena2 同样释放
+
+step2: 需要分配两页，（这里不是分配内存单元。） 需要的虚拟地址为 0x8048000,0x8049000
+
+getApage -> 0x8048000 之前被释放了，所以分配到了 0x8048000
+getApage -> 0x8049000 之前被释放了,紧接着0x8048000 分配了 0x8049000
+
+step3: 申请一个 512 ，1024 单位的内存块
+ 0x804A000 ->  arena1[ cnt 7 / size 512 (紧接着0x8049000在 0x804A000 新建一
+ 0x804B000 ->  arena2[ cnt 3 / size 1024 (紧接着0x804A000在  0x804B000 新建一个内存仓库
+    arena1 -- 
+    arena2 -- 
+
+step4: 读入文件到内存 0x8048000 ~ 0x8049044 (大小0x1044)
+读入 0x1044 -> 0x8048000 ~ 0x8049044
+
+    arena1 +=  0x804A000 (free) 
+    arena2 ++  0x804B000 (free)
+
+每次都把内存仓库最后一个内存块释放，每次创建新的内存仓库获取内存块.
+最后读入文件到内存的时候，0x8048000 ~ 0x8049044  并没覆盖到之前的分配元信息，0x804A000~
+
+
+bug 情况。
+
+step1: 申请一个 512 ，1024 单位的内存块
+
+ 0x8048000 ->  arena1[ cnt 6 / size 512 （之前有个512单位的内存单元没有释放，所以用原来的仓库分配
+ 0x8049000 ->  arena2[ cnt 3 / size 1024 （新建
+    arena1 -- 
+    arena2 --
+    arena1 ++  还有内存单元，不释放
+    arena2 ++  释放内存仓库
+
+step2: 需要分配两页，（这里不是分配内存单元。） 需要的虚拟地址为 0x8048000,0x8049000
+getApage -> 0x8048000 已经存在了。决定用现有的 （代码逻辑。有现有的页，不申请新的。。。   
+getApage -> 0x8049000 
+
+step3: 申请一个 512 ，1024 单位的内存块
+0x8048000 ->  arena1[ cnt 6 / size 512 （现有的
+0x804A000 ->  arena2[ cnt 3 / size 1024 (创建
+    arena1 -- 
+    arena2 --
+
+step4: 读入文件到内存 0x8048000 ~ 0x8049044 (大小0x1044)（破坏了 内存仓库元信息)
+读入 读入 0x1044 -> 0x8048000 ~ 0x8049044 
+
+free(addr2 （元信息在0x804A000) 成功
+free(addr1  (元信息在0x8048000，已经被破坏，)失败。 
+
+由于不是每次创建新的内存仓库，导致新的内存仓库在 被用户程序覆盖的内存范围之内
+
+*/
 /* 用path指向的程序替换当前进程 */
 int32_t sys_execv(const char* path, const char* argv[]) {
-   uint32_t argc = 0;
-   while (argv[argc]) {
-      argc++;
-   }
-   int32_t entry_point = load(path);     
-   if (entry_point == -1) {	 // 若加载失败则返回-1
-      return -1;
+
+    //sys_malloc(512); 只要多申请一块内存不释放，必崩溃。
+    uint32_t argc = 0;
+    while (argv[argc])
+    {
+        argc++;
    }
    
+   int32_t entry_point = load(path);     
+   if (entry_point == -1) {	 // 若加载失败则返回-1
+       printk("exec error\n");
+       return -1;
+   }
    struct task_struct* cur = running_thread();
    /* 修改进程名 */
    memcpy(cur->name, path, TASK_NAME_LEN);
    cur->name[TASK_NAME_LEN-1] = 0;
-
    struct intr_stack* intr_0_stack = (struct intr_stack*)((uint32_t)cur + PG_SIZE - sizeof(struct intr_stack));
    /* 参数传递给用户进程 */
    intr_0_stack->ebx = (int32_t)argv;
@@ -173,7 +259,6 @@ int32_t sys_execv(const char* path, const char* argv[]) {
    intr_0_stack->eip = (void*)entry_point;
    /* 使新用户进程的栈地址为最高用户空间地址 */
    intr_0_stack->esp = (void*)0xc0000000;
-
    /* exec不同于fork,为使新进程更快被执行,直接从中断返回 */
    asm volatile ("movl %0, %%esp; jmp intr_exit" : : "g" (intr_0_stack) : "memory");
    return 0;

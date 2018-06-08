@@ -123,7 +123,35 @@ touch_hd80:
 	$(BXIMAGE) -hd -mode='flat' -size=80 -q $(OUT_BUILD)hd80.img
 
 
+docker_osw:
+	docker run -d -P -it  \
+	--name osw \
+	--mount type=bind,source=/Users/yzr/repos/YangOS/osbook-code/code/c15/g,target=/opt/mydir \
+	ubuntu:work-os32  bash
+osw_bash:
+	docker exec -it osw bash
 
+OSC=../osbook-code/code/c15/g/dat
+
+$(OSC)/os2.img:$(OUT_F_BOOT_BIN) $(OUT_F_LOADER_BIN)
+	
+	#强制
+	$(BXIMAGE) -hd -mode='flat' -size=$(SIZE) -q  $(OSC)/os2.img
+	# MBR 放在 0 扇区
+	dd if=$(OUT_F_BOOT_BIN) of=$(OSC)/os2.img bs=512 count=1 conv=notrunc 
+	# 1 扇区空闲
+
+	# loader 放在 第 2 扇区 开始。
+	dd if=$(OUT_F_LOADER_BIN) of=$(OSC)/os2.img bs=512 count=4 seek=2 conv=notrunc
+	docker exec -it osw make build 
+	dd if=../osbook-code/code/c15/g/build/kernel.bin  of=$(OSC)/os2.img bs=512 count=200 seek=9 conv=notrunc
+
+	
+
+run2:
+	rm -f $(OSC)/os2.img
+	make $(OSC)/os2.img
+	$(BOCHS) -f bochs2.conf	
 #******************************************************************************************************
 #******************************************************************************************************
 #

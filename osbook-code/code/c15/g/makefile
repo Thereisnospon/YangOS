@@ -6,7 +6,7 @@ LD = ld
 LIB = -I lib/ -I lib/kernel/ -I lib/user/ -I kernel/ -I device/ -I thread/ -I userprog/ -I fs/ -I shell/
 ASFLAGS = -f elf
 CFLAGS = -Wall $(LIB) -c -fno-builtin -W -Wstrict-prototypes \
-         -Wmissing-prototypes
+         -Wmissing-prototypes -fno-stack-protector
 LDFLAGS = -Ttext $(ENTRY_POINT) -e main -Map $(BUILD_DIR)/kernel.map
 OBJS = $(BUILD_DIR)/main.o $(BUILD_DIR)/init.o $(BUILD_DIR)/interrupt.o \
       $(BUILD_DIR)/timer.o $(BUILD_DIR)/kernel.o $(BUILD_DIR)/print.o \
@@ -181,7 +181,7 @@ $(BUILD_DIR)/switch.o: thread/switch.S
 $(BUILD_DIR)/kernel.bin: $(OBJS)
 	$(LD) $(LDFLAGS) $^ -o $@
 
-.PHONY : mk_dir hd clean all
+.PHONY : mk_dir hd clean all build prog_no_arg
 
 mk_dir:
 	if [[ ! -d $(BUILD_DIR) ]];then mkdir $(BUILD_DIR);fi
@@ -194,6 +194,15 @@ hd:
 clean:
 	cd $(BUILD_DIR) && rm -f ./*
 
-build: $(BUILD_DIR)/kernel.bin
+
+prog_no_arg:
+	echo "build"
+	cd command ; ./compile.sh 
+
+build: 
+	make $(BUILD_DIR)/kernel.bin
+	make prog_no_arg
+
+
 
 all: mk_dir build hd

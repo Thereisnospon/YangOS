@@ -40,7 +40,7 @@ static void copy_body_stack3(struct task_struct* child_thread, struct task_struc
    uint32_t idx_byte = 0;
    uint32_t idx_bit = 0;
    uint32_t prog_vaddr = 0;
-
+      int get=0;
    /* 在父进程的用户空间中查找已有数据的页 */
    while (idx_byte < btmp_bytes_len) {
       if (vaddr_btmp[idx_byte]) {
@@ -58,7 +58,7 @@ static void copy_body_stack3(struct task_struct* child_thread, struct task_struc
 	       page_dir_activate(child_thread);
 	       /* c 申请虚拟地址prog_vaddr */
 	       get_a_page_without_opvaddrbitmap(PF_USER, prog_vaddr);
-
+            get++;
 	       /* d 从内核缓冲区中将父进程数据复制到子进程的用户空间 */
 	       memcpy((void*)prog_vaddr, buf_page, PG_SIZE);
 
@@ -70,6 +70,7 @@ static void copy_body_stack3(struct task_struct* child_thread, struct task_struc
       }
       idx_byte++;
    }
+   printk("fork page%d\n", get);
 }
 
 /* 为子进程构建thread_stack和修改返回值 */
@@ -147,8 +148,9 @@ static int32_t copy_process(struct task_struct* child_thread, struct task_struct
 
    /* e 更新文件inode的打开数 */
    update_inode_open_cnts(child_thread);
-
+   
    mfree_page(PF_KERNEL, buf_page, 1);
+ 
    return 0;
 }
 
@@ -164,7 +166,7 @@ pid_t sys_fork(void) {
    if (copy_process(child_thread, parent_thread) == -1) {
       return -1;
    }
-
+  
    /* 添加到就绪线程队列和所有线程队列,子进程由调试器安排运行 */
    ASSERT(!elem_find(&thread_ready_list, &child_thread->general_tag));
    list_append(&thread_ready_list, &child_thread->general_tag);

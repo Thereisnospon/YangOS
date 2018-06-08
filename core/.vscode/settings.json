@@ -2,6 +2,7 @@
     "files.associations": {
         "io.h": "c",
         "ostream": "c",
-        "algorithm": "c"
+        "algorithm": "c",
+        "atomic": "c"
     }
 }
