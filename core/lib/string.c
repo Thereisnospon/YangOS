@@ -70,7 +70,8 @@ int8_t strcmp(const char*a,const char*b){
     return *a<*b ? -1 : *a > *b ;
 }
 //从左到右查找出现 ch 的首次地址
-char* strchar(const char*str,const uint8_t ch){
+char *strchr(const char *str, const uint8_t ch)
+{
     assert(str != NULL);
     while(*str!=0){
         if(*str==ch){

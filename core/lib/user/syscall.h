@@ -28,7 +28,8 @@ enum SYSCALL_NR
     SYS_EXECV,
     SYS_EXIT,
     SYS_WAIT,
-    SYS_PIPE
+    SYS_PIPE,
+    SYS_FD_REDIRECT
 };
 /* 返回当前任务pid */
 uint32_t getpid();
@@ -80,5 +81,5 @@ void exit(int32_t status);
 int16_t wait(int32_t *status);
 /* 生成管道,pipefd[0]负责读入管道,pipefd[1]负责写入管道 */
 int32_t pipe(int32_t pipefd[2]);
-
+void fd_redirect(uint32_t old_local_fd, uint32_t new_local_fd);
 #endif
