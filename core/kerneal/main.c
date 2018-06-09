@@ -28,7 +28,7 @@ void main(void)
     init_all();
     /*************    写入应用程序    *************/
     // run4();
-    run4();
+    //run4();
     /*************    写入应用程序结束   *************/
     // cls_screen();
     printf("[rabbit@localhost %s]$ ", "/");
