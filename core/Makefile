@@ -193,6 +193,20 @@ crt:
 
 S_CRT=$(BUILD_DIR)/simple_crt.a
 
+$(BUILD_DIR)/pack_tool.bin :$(BUILD_TOOLS)/pack-tool.c
+	gcc $(BUILD_TOOLS)/pack-tool.c -o $(BUILD_DIR)/pack_tool.bin
+
+ALL_U_BIN=$(C_BUILD_DIR)/cat.bin $(C_BUILD_DIR)/prog_no_arg.bin  $(BUILD_DIR)/prog_arg.bin   $
+
+$(BUILD_DIR)/prog-pack.img:$(BUILD_DIR)/pack_tool.bin $(ALL_U_BIN)
+	$(BUILD_DIR)/pack_tool.bin create $(BUILD_DIR)/prog-pack.img $(ALL_U_BIN)
+
+all_pack:$(BUILD_DIR)/prog-pack.img
+
+
+# fil_add:$(BUILD_DIR)/pack_tool.bin $(ALL_U_BIN)
+# 	$(BUILD_DIR)/pack_tool.bin append $(BUILD_DIR)/prog-pack.bin  $(BUILD_DIR)/tmp.txt 
+	
 #*********************************************************************************
 # 编译用户程序
 $(C_BUILD_DIR)/cat.o:command/cat.c $(command/cat.c_hs)
@@ -205,6 +219,12 @@ $(C_BUILD_DIR)/prog_arg.o: command/prog_arg.c $(command/prog_arg.c_hs)
 	gcc $(C_BUILD_F) $< -o $@
 
 $(C_BUILD_DIR)/prog_arg.bin:$(C_BUILD_DIR)/prog_arg.o $(S_CRT)
+	ld $< $(S_CRT) -o $@ 
+
+$(C_BUILD_DIR)/prog_no_arg.o: command/prog_no_arg.c $(command/prog_arg.c_hs)
+	gcc $(C_BUILD_F) $< -o $@
+
+$(C_BUILD_DIR)/prog_no_arg.bin:$(C_BUILD_DIR)/prog_no_arg.o $(S_CRT)
 	ld $< $(S_CRT) -o $@ 
 
 #*********************************************************************************
@@ -263,18 +283,19 @@ $(BUILD_DIR)/os.img:$(BUILD_DIR)/boot.bin $(BUILD_DIR)/loader.bin $(BUILD_DIR)/k
 #*********************************************************************************
 #  生成运行环境（如果没有开发工具，可以在docker 容器里build
 #*********************************************************************************
-build:$(BUILD_DIR)/os.img $(BUILD_DIR)/hd80.img
-
+build:$(BUILD_DIR)/os.img $(BUILD_DIR)/hd80.img $(BUILD_DIR)/prog-pack.img
+	dd if=$(BUILD_DIR)/prog-pack.img of=$(BUILD_DIR)/os.img bs=512 \
+	count=2000 seek=300 conv=notrunc
 #*********************************************************************************
 # 检索依赖的头文件
 #*********************************************************************************
-:
+hs:
 	$(PYTHON3) $(PY_TOOLS)/find_hs.py --scandir $(C_DIR) --u_src_mk $(C_DIR)/Makefile \
 	--u_dst_mk $(C_DIR)/Makefile \
 	--mode hs 
 
 #在docker容器里执行 hs
-:
+hs_docker:
 	docker exec -it $(CONTAINER) make -f Makefile hs
 
 #*********************************************************************************

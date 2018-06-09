@@ -317,8 +317,7 @@ free(addr1  (元信息在0x8048000，已经被破坏，)失败。
 */
 int32_t sys_execv(const char *path, const char *argv[])
 {
-  
-   
+    printf("exec %s\n", path);
     uint32_t argc = 0;
     while (argv[argc])
     {

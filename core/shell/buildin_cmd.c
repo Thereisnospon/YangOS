@@ -36,7 +36,7 @@ static void wash_path(char *old_abs_path, char *new_abs_path)
                 *slash_ptr = 0;
             }
             else
-            {   // 如new_abs_path为"/a",".."之后则变为"/"
+            { // 如new_abs_path为"/a",".."之后则变为"/"
                 /* 若new_abs_path中只有1个'/',即表示已经到了顶层目录,
 	 就将下一个字符置为结束符0. */
                 *(slash_ptr + 1) = 0;
@@ -356,4 +356,90 @@ int32_t buildin_rm(uint32_t argc, char **argv)
         }
     }
     return ret;
+}
+int sz=0;
+void try_write(char *name, int sector, uint32_t file_size)
+{
+    uint32_t sec_cnt = DIV_ROUND_UP(file_size, 512);
+    struct disk *sda = &channels[0].devices[0];
+    void *prog_buf = sys_malloc(file_size);
+   
+    ide_read(sda, sector, prog_buf, sec_cnt);
+    // int i = 0;
+    // printf("%s [", name);
+    // for (i = 0; i < 8; i++)
+    // {
+    //     printf("%x", ((char *)prog_buf)[i]);
+    // }
+    // printf("\n");
+    // sz++;
+    if (sz == 2)
+    {
+
+        while (1)
+        {
+            /* code */
+        }
+    }
+    int32_t fd = sys_open(name, O_CREAT | O_RDWR);
+    if (fd != -1)
+    {
+        if (sys_write(fd, prog_buf, file_size) == -1)
+        {
+            printk("file write error!\n");
+            while (1)
+                ;
+        }
+    }
+}
+char buf[512];
+struct item item_array[64];
+
+void get_path(char *name)
+{
+    char namebuf[128];
+    int len = strlen(name);
+    strcpy(namebuf, "/");
+    strcat(namebuf, name);
+    if (len > 4 && strcmp(name + len - 4, ".bin") == 0)
+    {
+        namebuf[len - 4 + 1] = '\0';
+    }
+    strcpy(name, namebuf);
+}
+int prog_len = 0;
+
+void uprog_init()
+{
+    read_img_files(300);
+}
+void read_img_files(int start_sector)
+{
+    //uint32_t sec_cnt = DIV_ROUND_UP(file_size, 512);
+    char namebuf[128];
+    struct disk *sda = &channels[0].devices[0];
+    ide_read(sda, start_sector, item_array, 4);
+    struct item *meta = item_array;
+    if (strlen(meta->name) != 13 || strcmp("thereisnospon", meta->name) != 0)
+    {
+        printk("no meta %d\n", strlen(meta->name));
+        return;
+    }
+    int i;
+    for (i = 1; i < 64; i++)
+    {
+        struct item *p = item_array + i;
+        if (strlen(p->name) < 16 && p->start > 0 && p->length > 0)
+        {
+            get_path(p->name);
+            printf("%s %d %d\n", p->name,p->start,p->length);
+            try_write(p->name, p->start + start_sector, p->length);
+        }
+        else
+        {
+            break;
+        }
+    }
+    prog_len = i;
+    //printk("meta %s\n", item_array[0].name);
 }
